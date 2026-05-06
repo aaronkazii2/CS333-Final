@@ -22,6 +22,41 @@ ul.task-list li input[type="checkbox"] {
 width: 0.8em;
 margin: 0 0.8em 0.2em -1em;  vertical-align: middle;
 }
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -2170,7 +2205,20 @@ vertical-align: -.125em;
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
 <div id="quarto-sidebar-toc-left" class="sidebar toc-left">
-  
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#dataset-description" id="toc-dataset-description" class="nav-link active" data-scroll-target="#dataset-description">Dataset Description</a></li>
+  <li><a href="#initial-data-exploration" id="toc-initial-data-exploration" class="nav-link" data-scroll-target="#initial-data-exploration">Initial Data Exploration</a></li>
+  <li><a href="#communication-goals" id="toc-communication-goals" class="nav-link" data-scroll-target="#communication-goals">Communication Goals</a>
+  <ul>
+  <li><a href="#how-do-macro-shocks-reshape-cross-asset-performance" id="toc-how-do-macro-shocks-reshape-cross-asset-performance" class="nav-link" data-scroll-target="#how-do-macro-shocks-reshape-cross-asset-performance">1. How do macro shocks reshape cross-asset performance?</a></li>
+  <li><a href="#do-macro-signals-mean-the-same-thing-in-developed-and-emerging-markets" id="toc-do-macro-signals-mean-the-same-thing-in-developed-and-emerging-markets" class="nav-link" data-scroll-target="#do-macro-signals-mean-the-same-thing-in-developed-and-emerging-markets">2. Do macro signals mean the same thing in developed and emerging markets?</a></li>
+  <li><a href="#does-inflation-alone-determine-asset-performance-or-does-policy-response-matter-more" id="toc-does-inflation-alone-determine-asset-performance-or-does-policy-response-matter-more" class="nav-link" data-scroll-target="#does-inflation-alone-determine-asset-performance-or-does-policy-response-matter-more">3. Does inflation alone determine asset performance, or does policy response matter more?</a></li>
+  </ul></li>
+  </ul>
+</nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
@@ -2179,7 +2227,7 @@ vertical-align: -.125em;
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Initial Exploration Notebook</h1>
-<p class="subtitle lead">CS 333 Interactive Informaton Visualization</p>
+<p class="subtitle lead">CS 333 Interactive Information Visualization</p>
 </div>
 
 
@@ -2208,7 +2256,32 @@ vertical-align: -.125em;
 </header>
 
 
-
+<section id="dataset-description" class="level2">
+<h2 class="anchored" data-anchor-id="dataset-description">Dataset Description</h2>
+<p>For our final project, we are thinking of using the <strong>Macro Indicators vs Asset Returns (1985–2024)</strong> dataset. This dataset covers 40 years of macroeconomic and financial market data across 30 countries, including both developed and emerging markets. It links macro variables such as GDP growth, inflation, policy rates, unemployment, financial stress, and exchange rate changes to returns across five asset classes: equities, bonds, real estate, commodities, and cash.</p>
+<p>The dataset is organized across several CSV files. The two main files for our analysis are <code>macro_indicators.csv</code>, which contains annual country-level macroeconomic data, and <code>asset_returns.csv</code>, which contains annual asset returns by country. These files can be joined by country, year, region, development level, and shock event. We also have supporting files such as <code>macro_monthly.csv</code>, which provides monthly G7 macro indicators, <code>correlations.csv</code>, which contains rolling macro-asset correlations, and <code>recession_episodes.csv</code>, which identifies recession periods across countries.</p>
+</section>
+<section id="initial-data-exploration" class="level2">
+<h2 class="anchored" data-anchor-id="initial-data-exploration">Initial Data Exploration</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># We will add exploratory summaries and visualizations here.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="communication-goals" class="level2">
+<h2 class="anchored" data-anchor-id="communication-goals">Communication Goals</h2>
+<section id="how-do-macro-shocks-reshape-cross-asset-performance" class="level3">
+<h3 class="anchored" data-anchor-id="how-do-macro-shocks-reshape-cross-asset-performance">1. How do macro shocks reshape cross-asset performance?</h3>
+<p>Different types of macro shocks, including growth slowdowns, inflation shocks, and periods of financial stress, may alter the relative performance of asset classes rather than affecting all assets uniformly. We want to explore whether returns across equities, bonds, real estate, commodities, and cash vary meaningfully between shock and non-shock periods, potentially creating different “winners” and “losers” depending on the macro environment. The goal is to show that asset performance depends not only on whether a crisis occurs, but also on the underlying nature of the macroeconomic shock.</p>
+</section>
+<section id="do-macro-signals-mean-the-same-thing-in-developed-and-emerging-markets" class="level3">
+<h3 class="anchored" data-anchor-id="do-macro-signals-mean-the-same-thing-in-developed-and-emerging-markets">2. Do macro signals mean the same thing in developed and emerging markets?</h3>
+<p>Macroeconomic variables such as inflation and policy rates may reflect fundamentally different economic conditions depending on a country’s level of development. We want to explore whether emerging markets exhibit wider ranges of inflation, interest rates, and currency movement than developed markets, indicating greater levels of macroeconomic volatility and instability. The goal is to demonstrate that the same signal — such as high inflation or elevated policy rates — can represent policy tightening in developed markets but crisis risk, inflation instability, or currency pressure in emerging markets.</p>
+</section>
+<section id="does-inflation-alone-determine-asset-performance-or-does-policy-response-matter-more" class="level3">
+<h3 class="anchored" data-anchor-id="does-inflation-alone-determine-asset-performance-or-does-policy-response-matter-more">3. Does inflation alone determine asset performance, or does policy response matter more?</h3>
+<p>Asset returns during inflationary periods may depend not only on the level of inflation itself, but also on how central banks respond through monetary policy. We want to explore whether traditional hedges such as bonds continue to provide protection during periods of rising inflation and increasing policy rates. The goal is to show that macroeconomic regimes are shaped by the interaction between inflation and policy response, rather than by a single variable in isolation.</p>
+</section>
+</section>
 
 </main>
 <!-- /main column -->

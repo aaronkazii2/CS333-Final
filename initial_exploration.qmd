@@ -1,6 +1,6 @@
 ---
 title: "Initial Exploration Notebook"
-subtitle: "CS 333 Interactive Informaton Visualization"
+subtitle: "CS 333 Interactive Information Visualization"
 author: "Aaron, Rebecca, Connor, JJ, Winnie"
 pagetitle: "Initial Exploration Notebook"
 date: today
@@ -21,3 +21,30 @@ from: markdown+emoji
 reference-location: margin
 citation-location: margin  
 ---
+
+## Dataset Description
+
+For our final project, we are thinking of using the **Macro Indicators vs Asset Returns (1985–2024)** dataset. This dataset covers 40 years of macroeconomic and financial market data across 30 countries, including both developed and emerging markets. It links macro variables such as GDP growth, inflation, policy rates, unemployment, financial stress, and exchange rate changes to returns across five asset classes: equities, bonds, real estate, commodities, and cash.
+
+The dataset is organized across several CSV files. The two main files for our analysis are `macro_indicators.csv`, which contains annual country-level macroeconomic data, and `asset_returns.csv`, which contains annual asset returns by country. These files can be joined by country, year, region, development level, and shock event. We also have supporting files such as `macro_monthly.csv`, which provides monthly G7 macro indicators, `correlations.csv`, which contains rolling macro-asset correlations, and `recession_episodes.csv`, which identifies recession periods across countries.
+
+## Initial Data Exploration
+
+```{r}
+# We will add exploratory summaries and visualizations here.
+
+```
+
+## Communication Goals
+
+### 1. How do macro shocks reshape cross-asset performance?
+
+Different types of macro shocks, including growth slowdowns, inflation shocks, and periods of financial stress, may alter the relative performance of asset classes rather than affecting all assets uniformly. We want to explore whether returns across equities, bonds, real estate, commodities, and cash vary meaningfully between shock and non-shock periods, potentially creating different “winners” and “losers” depending on the macro environment. The goal is to show that asset performance depends not only on whether a crisis occurs, but also on the underlying nature of the macroeconomic shock.
+
+### 2. Do macro signals mean the same thing in developed and emerging markets?
+
+Macroeconomic variables such as inflation and policy rates may reflect fundamentally different economic conditions depending on a country’s level of development. We want to explore whether emerging markets exhibit wider ranges of inflation, interest rates, and currency movement than developed markets, indicating greater levels of macroeconomic volatility and instability. The goal is to demonstrate that the same signal — such as high inflation or elevated policy rates — can represent policy tightening in developed markets but crisis risk, inflation instability, or currency pressure in emerging markets.
+
+### 3. Does inflation alone determine asset performance, or does policy response matter more?
+
+Asset returns during inflationary periods may depend not only on the level of inflation itself, but also on how central banks respond through monetary policy. We want to explore whether traditional hedges such as bonds continue to provide protection during periods of rising inflation and increasing policy rates. The goal is to show that macroeconomic regimes are shaped by the interaction between inflation and policy response, rather than by a single variable in isolation.
