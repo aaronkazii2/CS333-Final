@@ -1,0 +1,246 @@
+COLUMN DESCRIPTIONS — Macro Indicators Dataset
+===============================================
+40 Years · 30 Countries · 8 Regions · Annual + Monthly Series
+Author: Sergey Nefedov (sergionefedov)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE 1: macro_indicators.csv  (1,200 rows — annual, 30 countries × 40 years)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+country           Country name (30 countries, see list below)
+region            Geographic region:
+                    NorthAmerica / Europe / EasternEurope /
+                    Asia / AsiaPacific / LatAm / MiddleEast / Africa
+dev_level         Development classification:
+                    developed  — OECD high-income economies
+                    emerging   — Emerging market economies
+year              Calendar year (1985–2024)
+
+── GDP ──────────────────────────────────────────────────────────────────────
+gdp_growth        Real GDP growth rate (% YoY)
+                  Calibrated ranges:
+                    Developed: avg +1.8%, crisis years: -4% to -6%
+                    Emerging:  avg +4.5%, range: -5% to +12%
+gdp_level         GDP index (1985 = 100 for each country)
+                  Compound of annual growth; allows cross-country
+                  growth trajectory comparison over 40 years.
+
+── Inflation ────────────────────────────────────────────────────────────────
+inflation         Consumer Price Index, year-over-year change (%)
+                  Calibrated to documented disinflation trends:
+                    Developed: high (~6%) in 1980s → low (~1-2%) 1995-2021
+                              → spike (~7-9%) in 2021-2022 (post-COVID)
+                    Emerging:  wide range, 3-70%+ for high-inflation episodes
+                  Argentina: calibrated to documented hyperinflation episodes
+
+── Monetary Policy ──────────────────────────────────────────────────────────
+policy_rate       Central bank benchmark interest rate (%)
+                  Follows documented rate cycle:
+                    USA Fed Funds Rate: 8% (1985) → 5.25% (2023)
+                    ECB: 0% (2014-2022) → 4.5% (2023)
+                    Emerging: higher baseline, wider variance
+
+── Labour Market ────────────────────────────────────────────────────────────
+unemployment      Unemployment rate (% of labour force)
+                  Calibrated country-specific baselines:
+                    USA: structural ~4-5%; peak 10% (2009), 14% (2020 COVID)
+                    Europe: higher structural (Spain ~15-25% in crisis)
+                    Emerging: typically 4-8%, informality not captured
+
+── External Balance ─────────────────────────────────────────────────────────
+current_account   Current account balance (% of GDP)
+                  Positive = surplus (Germany, China, Netherlands)
+                  Negative = deficit (USA, UK, India)
+                  Range: -10% to +8%
+
+── Fiscal ───────────────────────────────────────────────────────────────────
+debt_to_gdp       Government gross debt as % of GDP
+                  Notable calibrations:
+                    Japan: highest (~200-250%)
+                    USA: rising from ~50% (1985) to ~120% (2024)
+                    Emerging: wide range 30-100%
+
+── Currency ─────────────────────────────────────────────────────────────────
+fx_change         Exchange rate change vs USD (%, annual)
+                  Positive = local currency appreciated vs USD
+                  Negative = depreciation
+                  Emerging currencies show higher volatility;
+                  Argentina/Turkey: large episodic depreciations
+
+── Sentiment & Stress ───────────────────────────────────────────────────────
+biz_confidence    Business confidence index (composite, 0-100)
+                  Based on PMI-style survey methodology
+                  50 = neutral; >50 = expansion; <50 = contraction
+
+fin_stress_idx    Financial stress index (0–3)
+                  0.0 = normal conditions
+                  1.0 = elevated stress (e.g. credit spread widening)
+                  2.0 = high stress (e.g. 2008, 2020 COVID)
+                  3.0 = systemic crisis
+                  Calibrated to: OECD Composite Indicator of Systemic Stress (CISS)
+                  and St. Louis Fed Financial Stress Index
+
+── Events ───────────────────────────────────────────────────────────────────
+shock_event       Label for major shock years (null if normal year):
+                    "Asian Crisis 1997"
+                    "Dot-com bust 2001"
+                    "Global Financial Crisis 2008-09"
+                    "European Debt Crisis 2010-12"
+                    "COVID-19 2020"
+                    "Post-COVID inflation 2021-22"
+                    "Ukraine War / Energy shock 2022"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE 2: macro_monthly.csv  (480 rows — monthly, USA aggregate, 1985–2024)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+date              Date (YYYY-MM-DD), first day of month
+year              Calendar year
+month             Month number (1–12)
+
+── Activity ─────────────────────────────────────────────────────────────────
+gdp_growth_mom    GDP growth proxy, month-over-month (%)
+                  Monthly interpolation of annual GDP data
+
+── Inflation ────────────────────────────────────────────────────────────────
+cpi_mom           CPI month-over-month change (%)
+cpi_yoy           CPI year-over-year change (%)
+                  Both calibrated to US CPI historical series:
+                  Peak: ~9% YoY in Jun-Jul 2022 (post-COVID)
+                  Deflation: 2009, 2015 (mild)
+
+── Monetary ─────────────────────────────────────────────────────────────────
+policy_rate       Federal Funds Rate (%) at month-end
+                  Key historical levels:
+                    8.0% (1985) → 3.0% (1992) → 6.5% (2000) →
+                    1.0% (2003) → 5.25% (2006) → 0.25% (2009-2015) →
+                    2.5% (2018) → 0.25% (2020) → 5.5% (2023)
+
+unemployment      US unemployment rate (%)
+                  Monthly series calibrated to Bureau of Labor Statistics
+
+── Leading Indicators ───────────────────────────────────────────────────────
+pmi               Purchasing Managers' Index (composite, manufacturing + services)
+                  50 = neutral; >50 = expansion; <50 = contraction
+                  Calibrated to ISM PMI historical series
+
+yield_spread_10_2 US Treasury yield spread: 10-year minus 2-year (percentage points)
+                  Positive = normal (upward sloping curve)
+                  Negative = inverted curve = RECESSION PREDICTOR
+                  Notable inversions: 1989, 2000, 2006-07, 2019, 2022-23
+
+── Financial Conditions ─────────────────────────────────────────────────────
+vix               CBOE Volatility Index (implied 30-day S&P 500 volatility)
+                  Historical range: 9 (ultra-low 2017) to 80+ (Mar 2020 COVID)
+                  Key spikes: 1987 (Black Monday), 1998 (LTCM),
+                              2008-09 (GFC), 2020 (COVID)
+
+credit_spread_bps US Investment Grade credit spread vs Treasuries (basis points)
+                  Low spreads (~80-100 bps) = risk-on
+                  High spreads (~500-600 bps) = stress (2008-09, 2020)
+                  1 basis point = 0.01%
+
+oil_change_yoy    Brent crude oil price, year-over-year change (%)
+                  Major moves:
+                    1986: -50% (Saudi price war)
+                    1990: +70% (Gulf War)
+                    2008: +90% then -60%
+                    2014-15: -50% (shale glut)
+                    2020: -40% (COVID demand collapse)
+                    2022: +60% (Ukraine war)
+
+── Events ───────────────────────────────────────────────────────────────────
+shock_event       Major shock label (null if normal month)
+                  Same taxonomy as macro_indicators.csv
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COUNTRIES IN DATASET (30 total)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Developed (14):
+  USA, Canada, UK, Germany, France, Italy, Spain, Netherlands,
+  Sweden, Switzerland, Japan, Australia, South_Korea
+
+Emerging (16):
+  China, India, Brazil, Mexico, Argentina, Chile, Colombia,
+  Russia, Poland, Turkey, South_Africa, Nigeria, Egypt,
+  Saudi_Arabia, UAE, Indonesia, Thailand
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CALIBRATION SOURCES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMF World Economic Outlook Database (April 2024 edition)
+  → GDP growth, inflation, current account, debt/GDP for all 30 countries
+  → Available: https://www.imf.org/en/Publications/WEO
+
+World Bank Open Data
+  → Unemployment rates, GDP levels, development classification
+  → Available: https://data.worldbank.org
+
+FRED (Federal Reserve Bank of St. Louis)
+  → US monthly series: Fed Funds Rate, CPI, unemployment, yield spread
+  → VIX (from CBOE via FRED), credit spreads (BofA ICE indices)
+  → Available: https://fred.stlouisfed.org
+
+BIS Statistics (Bank for International Settlements)
+  → Policy rates cross-country, credit spreads, financial stress indicators
+  → Available: https://www.bis.org/statistics
+
+OECD Statistics
+  → Business confidence indices, PMI-style composite indicators
+  → Available: https://stats.oecd.org
+
+EIA (US Energy Information Administration)
+  → Brent crude oil historical prices
+  → Available: https://www.eia.gov/petroleum/data.php
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUGGESTED TASKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Recession prediction (macro_monthly.csv):
+  Target: binary recession indicator (derive from gdp_growth_mom < 0 for 2+ months)
+  Features: yield_spread_10_2 (inverted curve), pmi, credit_spread_bps, vix
+  Key insight: yield curve inversion precedes recession by 12-18 months on average
+
+Cross-country growth regression (macro_indicators.csv):
+  Target: gdp_growth
+  Features: inflation, policy_rate, debt_to_gdp, current_account, fin_stress_idx
+  Challenge: control for country fixed effects and global shocks simultaneously
+
+Inflation regime analysis:
+  Cluster countries into inflation regimes (low/moderate/high/hyperinflation)
+  Track regime transitions over 40 years
+  Which variables best predict regime change?
+
+Currency crisis detection:
+  Target: large fx_change events (|fx_change| > 15%)
+  Features: current_account, debt_to_gdp, policy_rate, fin_stress_idx
+  Event study: do macro imbalances predict currency crises 1-2 years ahead?
+
+Developed vs Emerging comparison:
+  Do the same monetary transmission mechanisms apply in both groups?
+  Does higher policy_rate reduce inflation more effectively in developed markets?
+
+Time series forecasting (macro_monthly.csv):
+  Forecast cpi_yoy 6 months ahead using ARIMA / LSTM
+  Use yield_spread_10_2 and pmi as leading indicators
+  Evaluate performance across different inflation regimes
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NOTE ON SYNTHETIC DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+All data is synthetic. Marginal distributions and key pairwise
+correlations (e.g. policy_rate → inflation, fin_stress_idx → gdp_growth)
+are calibrated to the sources above. Individual country-year values
+should not be cited as factual; use for modelling, education and
+methodology development only.
+
+Reproducible via generate_macro.py with seed numpy.random.default_rng(42).

@@ -1,0 +1,23 @@
+---
+title: "Initial Exploration Notebook"
+subtitle: "CS 333 Interactive Informaton Visualization"
+author: "Aaron, Rebecca, Connor, JJ, Winnie"
+pagetitle: "Initial Exploration Notebook"
+date: today
+
+format:
+  html:
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    embed-resources: true
+    code-fold: false
+    link-external-newwindow: true
+
+execute:
+  warning: false
+
+from: markdown+emoji
+reference-location: margin
+citation-location: margin  
+---

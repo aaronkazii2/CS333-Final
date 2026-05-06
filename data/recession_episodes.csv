@@ -1,0 +1,75 @@
+country,region,dev_level,rec_start,rec_end,duration_yrs,min_gdp_growth,avg_inflation,avg_rate,shock_event
+Argentina,LatAm,emerging,1985,1988,4,-2.151,24.334,28.077,Black Monday
+Argentina,LatAm,emerging,1991,1991,1,-1.77,25.213,28.158,Recession
+Argentina,LatAm,emerging,1994,1995,2,-0.365,22.886,28.763,
+Argentina,LatAm,emerging,2008,2013,6,-4.62,60.716,68.161,Global Financial Crisis
+Argentina,LatAm,emerging,2020,2020,1,-0.52,47.328,71.401,COVID-19
+Australia,AsiaPacific,developed,2009,2010,2,-1.501,2.268,2.665,GFC trough
+Australia,AsiaPacific,developed,2013,2013,1,-0.392,3.1,2.628,
+Australia,AsiaPacific,developed,2020,2020,1,-0.537,3.496,3.183,COVID-19
+Brazil,LatAm,emerging,2002,2005,4,-1.497,7.107,8.787,Corporate scandals
+Brazil,LatAm,emerging,2008,2012,5,-3.898,7.424,8.104,Global Financial Crisis
+Brazil,LatAm,emerging,2015,2015,1,-0.13,5.205,10.22,China slowdown
+Canada,NorthAmerica,developed,2008,2011,4,-1.468,3.252,5.499,Global Financial Crisis
+Canada,NorthAmerica,developed,2020,2020,1,-0.15,1.932,2.236,COVID-19
+Chile,LatAm,emerging,1998,1998,1,-0.379,8.486,11.88,LTCM / Russia default
+Chile,LatAm,emerging,2008,2009,2,-0.713,2.795,3.422,Global Financial Crisis
+Chile,LatAm,emerging,2020,2020,1,-0.449,7.511,5.883,COVID-19
+Chile,LatAm,emerging,2022,2022,1,-0.075,9.847,8.857,Inflation / rate hike cycle
+China,Asia,emerging,2009,2009,1,-0.71,0.296,0.194,GFC trough
+Colombia,LatAm,emerging,1991,1992,2,-0.454,4.462,4.893,Recession
+Egypt,Africa,emerging,2008,2010,3,-2.119,8.712,9.034,Global Financial Crisis
+Egypt,Africa,emerging,2012,2012,1,-1.621,12.162,9.398,
+France,Europe,developed,1987,1987,1,-0.176,-0.418,2.188,Black Monday
+France,Europe,developed,1991,1991,1,-0.255,2.586,2.436,Recession
+France,Europe,developed,2001,2001,1,-0.035,1.677,2.175,Dot-com bust / 9-11
+France,Europe,developed,2008,2011,4,-2.298,0.026,0.41,Global Financial Crisis
+France,Europe,developed,2020,2020,1,-2.376,-0.114,0.742,COVID-19
+Germany,Europe,developed,2008,2012,5,-3.058,1.199,0.313,Global Financial Crisis
+Germany,Europe,developed,2020,2020,1,-0.908,1.553,1.94,COVID-19
+Italy,Europe,developed,1990,1990,1,-0.041,3.083,5.51,Gulf War / S&L crisis
+Italy,Europe,developed,1992,1993,2,-0.323,3.11,5.589,
+Italy,Europe,developed,1996,2003,8,-2.292,2.551,5.409,Asian Financial Crisis
+Italy,Europe,developed,2008,2012,5,-3.575,3.258,4.221,Global Financial Crisis
+Italy,Europe,developed,2020,2020,1,-1.036,2.171,4.097,COVID-19
+Japan,Asia,developed,1991,1993,3,-0.492,1.755,2.623,Recession
+Japan,Asia,developed,2008,2012,5,-4.049,2.474,1.971,Global Financial Crisis
+Japan,Asia,developed,2020,2020,1,-1.563,3.857,3.972,COVID-19
+Mexico,LatAm,emerging,1999,1999,1,-0.575,7.365,7.775,
+Mexico,LatAm,emerging,2001,2001,1,-0.133,9.691,10.023,Dot-com bust / 9-11
+Mexico,LatAm,emerging,2009,2009,1,-0.478,9.839,10.459,GFC trough
+Mexico,LatAm,emerging,2020,2020,1,-1.747,4.246,12.182,COVID-19
+Netherlands,Europe,developed,2009,2012,4,-1.144,2.4,3.246,GFC trough
+Netherlands,Europe,developed,2020,2020,1,-0.193,2.469,4.629,COVID-19
+Nigeria,Africa,emerging,1999,2002,4,-1.354,13.724,12.771,Dot-com bust / 9-11
+Nigeria,Africa,emerging,2004,2005,2,-0.802,16.712,12.889,
+Nigeria,Africa,emerging,2008,2009,2,-3.799,10.675,13.922,Global Financial Crisis
+Poland,EasternEurope,emerging,1990,1991,2,-0.642,2.295,6.94,Gulf War / S&L crisis
+Poland,EasternEurope,emerging,2001,2001,1,-0.152,2.404,2.203,Dot-com bust / 9-11
+Poland,EasternEurope,emerging,2007,2011,5,-5.294,2.029,4.037,Global Financial Crisis
+Russia,EasternEurope,emerging,2001,2003,3,-1.083,13.091,13.724,Dot-com bust / 9-11
+Russia,EasternEurope,emerging,2008,2012,5,-2.889,6.958,12.164,Global Financial Crisis
+Russia,EasternEurope,emerging,2014,2014,1,-0.243,8.213,10.619,
+Saudi_Arabia,MiddleEast,emerging,2009,2011,3,-1.795,1.08,-0.5,GFC trough
+South_Africa,Africa,emerging,1990,1993,4,-3.572,4.593,5.95,Gulf War / S&L crisis
+South_Africa,Africa,emerging,2008,2013,6,-4.908,6.248,3.983,Global Financial Crisis
+South_Korea,Asia,developed,2009,2009,1,-0.508,4.078,4.015,GFC trough
+Spain,Europe,developed,2008,2011,4,-1.172,2.698,4.391,Global Financial Crisis
+Sweden,Europe,developed,2008,2010,3,-2.127,1.99,2.986,Global Financial Crisis
+Sweden,Europe,developed,2020,2020,1,-0.121,3.789,4.068,COVID-19
+Switzerland,Europe,developed,1991,1992,2,-0.032,3.445,5.124,Recession
+Switzerland,Europe,developed,1999,2004,6,-0.844,-0.042,2.808,Dot-com bust / 9-11
+Switzerland,Europe,developed,2008,2013,6,-4.042,1.723,1.642,Global Financial Crisis
+Switzerland,Europe,developed,2020,2020,1,-2.647,-1.152,0.0,COVID-19
+Thailand,Asia,emerging,2008,2010,3,-1.615,7.127,8.129,Global Financial Crisis
+UAE,MiddleEast,emerging,2012,2013,2,-0.684,3.078,3.26,
+UAE,MiddleEast,emerging,2015,2015,1,-1.665,1.028,1.332,China slowdown
+UAE,MiddleEast,emerging,2020,2020,1,-2.9,2.272,2.059,COVID-19
+UAE,MiddleEast,emerging,2023,2023,1,-0.068,6.826,4.869,Rates plateau
+UK,Europe,developed,2008,2012,5,-2.6,4.142,2.134,Global Financial Crisis
+UK,Europe,developed,2015,2016,2,-0.379,2.64,2.707,China slowdown
+UK,Europe,developed,2020,2020,1,-1.869,2.406,3.717,COVID-19
+UK,Europe,developed,2023,2023,1,-0.255,4.447,4.965,Rates plateau
+USA,NorthAmerica,developed,2001,2005,5,-1.077,1.346,2.592,Dot-com bust / 9-11
+USA,NorthAmerica,developed,2008,2012,5,-3.76,2.607,1.591,Global Financial Crisis
+USA,NorthAmerica,developed,2020,2020,1,-1.751,2.037,1.407,COVID-19
