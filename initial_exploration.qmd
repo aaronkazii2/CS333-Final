@@ -55,19 +55,29 @@ asset_returns |>
     `Avg Real Estate Return` = mean(real_estate),
     `Avg Commodity Return` = mean(commodities),
     `Avg Cash Return` = mean(cash)
-  )
+  )|>
+  knitr::kable(digits = 2)
 
 # how many countries and years are in the dataset?
 asset_returns |> summarize(
   countries = n_distinct(country),
   years = n_distinct(year),
   total_rows = n()
-)
+)|>
+  knitr::kable(digits = 2)
 
 # what crises are in the data and how many country-years were affected?
 asset_returns |>
   filter(!is.na(shock_event)) |>
-  count(shock_event, sort = TRUE)
+  group_by(shock_event) |>
+  summarize(
+    years = paste(unique(year), collapse = ", "),
+    countries_affected = n_distinct(country),
+    country_years = n(),
+    .groups = "drop"
+  ) |>
+  arrange(years) |>
+  knitr::kable()
 
 ```
 ## Data Structure
@@ -84,13 +94,9 @@ rate %), gdp_growth (economic growth %), unemployment (jobless rate %),
 fx_change (currency movement vs USD %), and fin_stress_idx (financial stress 
 score from 0-3).
 
-## Story intro
+## Story Introduction
 
-Our three communication goals form a connected narrative. We first ask whether 
-crises affect all investments equally . We then ask whether economic 
-signals mean the same thing across countries . Finally we ask what 
-actually drives investment performance during inflation and find that government 
-policy response matters more than inflation alone.
+Our three communication goals form a connected narrative about how macroeconomic conditions shape investment performance across countries and asset classes. We begin by exploring whether global macro shocks affect all investments equally, or whether different crises create different “winners” and “losers” across equities, bonds, commodities, real estate, and cash. We then investigate whether common macroeconomic signals, such as inflation and policy rates, carry the same meaning across developed and emerging markets, where economic volatility and instability can differ substantially. Finally, we explore whether inflation alone drives asset performance, or whether the response of central banks through monetary policy plays a more important role in determining how assets behave during inflationary periods.
 
 ## Communication Goals
 
@@ -114,14 +120,16 @@ shock_avg <- asset_returns |>
     Cash = mean(cash)
   )
 
-shock_avg
+shock_avg |>
+  knitr::kable()
 
 # get the actual shock years for USA
 usa_shocks <- asset_returns |>
   filter(country == "USA", !is.na(shock_event)) |>
   select(year, shock_event)
 
-usa_shocks
+usa_shocks|>
+  knitr::kable()
 ```
 
 
@@ -158,30 +166,36 @@ asset_returns |>
 
 ### 2. Do macro signals mean the same thing in developed and emerging markets?
 
-Macroeconomic variables such as inflation and policy rates may reflect fundamentally different economic conditions depending on a country’s level of development. We want to explore whether emerging markets exhibit wider ranges of inflation, interest rates, and currency movement than developed markets, indicating greater levels of macroeconomic volatility and instability. The goal is to demonstrate that the same signal — such as high inflation or elevated policy rates — can represent policy tightening in developed markets but crisis risk, inflation instability, or currency pressure in emerging markets.
+Macroeconomic variables such as inflation and policy rates may reflect fundamentally different economic conditions depending on a country’s level of development. We want to explore whether emerging markets exhibit wider ranges of inflation, interest rates, and currency movement than developed markets, indicating greater levels of macroeconomic volatility and instability. The goal is to demonstrate that the same signal, such as high inflation or elevated policy rates, can represent policy tightening in developed markets but crisis risk, inflation instability, or currency pressure in emerging markets.
 
 
-The chart below compares inflation rates across two developed markets (USA, Germany) and two emerging markets (Argentina, Brazil). Argentina operates at 25-70% inflation for the entire 40-year period, while the USA rarely exceeds 5%.
+The chart below compares inflation rates and policy rates across two developed markets (USA and Germany) and two emerging markets (Argentina and Brazil). Emerging markets exhibit substantially higher and more volatile inflation over time, often paired with dramatically higher policy rates. In contrast, developed markets remain within relatively stable inflation and interest-rate ranges, suggesting that the same macroeconomic signal may reflect very different underlying economic conditions depending on the country.
 
 ```{r}
-macro_indicators |>
-  filter(country %in% c("USA", "Argentina", "Brazil", "Germany")) |>
-  ggplot(aes(x = year, y = inflation, color = country)) +
+
+selected <- c("USA", "Germany", "Argentina", "Brazil")
+
+macro_long <- macro_indicators |>
+  filter(country %in% selected) |>
+  select(country, year, inflation, policy_rate) |>
+  pivot_longer(
+    cols = c(inflation, policy_rate),
+    names_to = "variable",
+    values_to = "value"
+  )
+
+macro_long |>
+  ggplot(aes(x = year, y = value, color = country)) +
   geom_line(linewidth = 1) +
-  geom_text(data = macro_indicators |> 
-              filter(country %in% c("USA", "Argentina", "Brazil", "Germany"), 
-                     year == 2024),
-            aes(label = country), 
-            hjust = -0.1, size = 3.5) +
-  scale_x_continuous(limits = c(1985, 2028)) +
-  scale_y_continuous(labels = scales::percent_format(scale = 1, suffix = "%")) +
+  facet_wrap(~variable, scales = "free_y", ncol = 1) +
+  scale_x_continuous(limits = c(1985, 2025)) +
   labs(
-    title = "Inflation Rates Are Far Higher and More Volatile in Emerging Markets\n Than Developed Markets",
+    title = "Emerging Markets Operate Under Much More Volatile Macro Regimes",
+    subtitle = "Inflation and policy rates across selected developed and emerging economies",
     x = "Year",
-    y = "Annual Inflation Rate (%)"
+    y = NULL
   ) +
-  theme_minimal() +
-  theme(legend.position = "none")
+  theme_minimal(base_size = 12)
 
 ```
 
@@ -193,38 +207,59 @@ Asset returns during inflationary periods may depend not only on the level of in
 
 
 
-We split developed market country-years into inflation buckets and compare bond returns depending on whether policy rates were high or low. The key finding is in the 5-10% inflation bucket, bonds lose money when rates are kept low, but hold up when central banks respond aggressively.
+We split developed-market country-years into inflation buckets and compare bond returns depending on whether policy rates were rising or remaining flat/falling. This approach better captures the role of monetary policy response rather than simply comparing high- and low-rate environments. The chart suggests that bonds behave differently across inflation regimes: during moderate inflation, bond returns remain relatively stable regardless of policy direction, but during higher inflation periods, bond performance weakens significantly when central banks continue raising rates. This supports the idea that asset performance during inflation depends not only on inflation itself, but also on how policymakers respond to it.
 
 
 ```{r}
 
-# join asset returns and macro indicators together
 joined <- asset_returns |>
-  inner_join(macro_indicators, by = c("country", "year", "dev_level", "region"))
+  inner_join(
+    macro_indicators,
+    by = c("country", "year", "dev_level", "region", "shock_event")
+  ) |>
+  arrange(country, year) |>
+  group_by(country) |>
+  mutate(
+    policy_change = policy_rate - lag(policy_rate),
+    policy_response = case_when(
+      policy_change > 0 ~ "Rates Rising",
+      policy_change <= 0 ~ "Rates Flat/Falling",
+      TRUE ~ NA_character_
+    ),
+    inflation_bucket = cut(
+      inflation,
+      breaks = c(-Inf, 2, 5, 10, Inf),
+      labels = c("Under 2%", "2-5%", "5-10%", "Over 10%")
+    )
+  ) |>
+  ungroup()
 
 joined |>
-  mutate(
-    rate_level = ifelse(policy_rate > median(policy_rate, na.rm = TRUE),
-                        "High Policy Rate", "Low Policy Rate"),
-    inflation_bucket = cut(inflation, 
-                           breaks = c(-Inf, 2, 5, 10, Inf),
-                           labels = c("Under 2%", "2-5%", "5-10%", "Over 10%"))
+  filter(dev_level == "developed", !is.na(policy_response)) |>
+  group_by(inflation_bucket, policy_response) |>
+  summarize(
+    avg_bond = mean(bonds, na.rm = TRUE),
+    n = n(),
+    .groups = "drop"
   ) |>
-  filter(dev_level == "developed") |>
-  group_by(inflation_bucket, rate_level) |>
-  summarize(avg_bond = mean(bonds, na.rm = TRUE), .groups = "drop") |>
-  ggplot(aes(x = inflation_bucket, y = avg_bond, fill = rate_level)) +
+  ggplot(aes(x = inflation_bucket, y = avg_bond, fill = policy_response)) +
   geom_col(position = "dodge") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
-  scale_fill_manual(values = c("High Policy Rate" = "#E05C5C",
-                                "Low Policy Rate" = "#4A90D9")) +
   scale_y_continuous(labels = scales::percent_format(scale = 1, suffix = "%")) +
   labs(
-    title = "Bond Returns Fall When Central Banks Keep Rates Low During High Inflation",
+    title = "Bond Returns Depend on Inflation and the Policy Response",
+    subtitle = "Developed market bond returns grouped by inflation regime and whether rates were rising",
     x = "Inflation Level",
-    y = "Avg Bond Return (%)",
+    y = "Average Bond Return (%)",
     fill = NULL
   ) +
   theme_minimal() +
   theme(legend.position = "top")
 ```
+
+## Conclusion + Next Steps
+
+Our initial exploration suggests that the dataset contains meaningful variation across macroeconomic environments, countries, and asset classes that can support a strong interactive storytelling project. Early analysis indicates that different types of macro shocks produce different cross-asset outcomes, that developed and emerging markets operate under substantially different macro regimes, and that policy response may play an important role in determining asset performance during inflationary periods.
+
+Going forward, we plan to refine these communication goals into a connected interactive narrative. We want to further explore how different crises reshape asset “winners” and “losers,” investigate how macroeconomic signals differ across developed and emerging markets, and analyze how inflation and monetary policy interact to influence asset returns. In future milestones, we plan to experiment with more polished and interactive visualizations, including heatmaps, regime matrices, and interactive scatterplots, that allow users to explore these macro relationships across countries, time periods, and asset classes.
+
