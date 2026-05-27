@@ -1,7 +1,7 @@
 ---
 title: "Initial Exploration Notebook"
 subtitle: "CS 333 Interactive Information Visualization"
-author: "Aaron, Rebecca, Connor, JJ, Winnie"
+author: "Aaron, Rebecca, Connor, Janelys, Winnie"
 pagetitle: "Initial Exploration Notebook"
 date: today
 
@@ -197,6 +197,27 @@ macro_long |>
   ) +
   theme_minimal(base_size = 12)
 
+```
+```{r}
+macro_median <- macro_indicators |>
+  filter(dev_level %in% c("developed", "emerging")) |>
+  group_by(year, dev_level) |>
+  summarize(
+    median_policy_rate = median(policy_rate, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+macro_median |>
+  ggplot(aes(x = year, y = median_policy_rate, color = dev_level)) +
+  geom_line(linewidth = 1.2) +
+  scale_x_continuous(limits = c(1985, 2025)) +
+  labs(
+    title = "Median Policy Rates: Developed vs Emerging Economies",
+    x = "Year",
+    y = "Median Policy Rate",
+    color = "Development Level"
+  ) +
+  theme_minimal(base_size = 12)
 ```
 
 
