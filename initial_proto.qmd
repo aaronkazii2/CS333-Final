@@ -1,0 +1,1594 @@
+---
+title: "How Macro Regimes Reshape Investment Performance"
+subtitle: "Exploring how shocks, inflation, and policy responses affect asset returns across developed and emerging markets"
+author: "Aaron, Rebecca, Connor, JJ, Winnie"
+date: today
+format:
+  closeread-html:
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(tidyverse)
+library(janitor)
+library(forcats)
+library(scales)
+library(plotly)
+
+asset_path <- if (file.exists("asset_returns.csv")) {
+  "asset_returns.csv"
+} else {
+  "data/asset_returns.csv"
+}
+
+macro_path <- if (file.exists("macro_indicators.csv")) {
+  "macro_indicators.csv"
+} else {
+  "data/macro_indicators.csv"
+}
+
+asset_returns <- read_csv(asset_path) |> clean_names()
+macro_indicators <- read_csv(macro_path) |> clean_names()
+
+macro_assets <- asset_returns |>
+  left_join(
+    macro_indicators,
+    by = c("country", "year", "dev_level", "region", "shock_event")
+  )
+
+asset_order <- c("Equities", "Bonds", "Real Estate", "Commodities", "Cash")
+
+asset_long <- macro_assets |>
+  pivot_longer(
+    cols = c(equities, bonds, real_estate, commodities, cash),
+    names_to = "asset_class",
+    values_to = "asset_return"
+  ) |>
+  mutate(
+    asset_class = case_when(
+      asset_class == "equities" ~ "Equities",
+      asset_class == "bonds" ~ "Bonds",
+      asset_class == "real_estate" ~ "Real Estate",
+      asset_class == "commodities" ~ "Commodities",
+      asset_class == "cash" ~ "Cash",
+      TRUE ~ asset_class
+    )
+  )
+
+shock_base <- asset_long |>
+  filter(!is.na(shock_event)) |>
+  transmute(
+    year,
+    shock_event = str_squish(shock_event),
+    dev_level = str_to_title(dev_level),
+    asset_class,
+    asset_return
+  )
+
+shock_heatmap <- bind_rows(
+  shock_base |>
+    mutate(market_group = "All Markets"),
+  shock_base |>
+    transmute(
+      year,
+      shock_event,
+      market_group = dev_level,
+      asset_class,
+      asset_return
+    )
+) |>
+  group_by(market_group, shock_event, year, asset_class) |>
+  summarize(
+    avg_return = mean(asset_return, na.rm = TRUE),
+    n = sum(!is.na(asset_return)),
+    .groups = "drop"
+  ) |>
+  mutate(
+    shock_label = paste0(year, ": ", shock_event),
+    market_group = factor(
+      market_group,
+      levels = c("All Markets", "Developed", "Emerging")
+    )
+  )
+
+shock_index <- shock_heatmap |>
+  distinct(year, shock_event, shock_label) |>
+  arrange(desc(year), shock_event)
+
+shock_order <- shock_index$shock_label
+
+shock_heatmap <- shock_heatmap |>
+  mutate(shock_label = factor(shock_label, levels = shock_order))
+
+z_limit <- shock_heatmap |>
+  summarize(max_abs = max(abs(avg_return), na.rm = TRUE)) |>
+  pull(max_abs)
+
+if (!is.finite(z_limit) || z_limit == 0) {
+  z_limit <- 5
+}
+
+z_limit <- ceiling(z_limit / 5) * 5
+
+story_heatmap_height <- 545
+interactive_heatmap_height <- 720
+story_scatter_height <- 555
+interactive_scatter_height <- 700
+
+heatmap_colors <- list(
+  list(0, "#b2182b"),
+  list(0.5, "#f7f7f7"),
+  list(1, "#1a9850")
+)
+
+macro_palette <- c(
+  "Developed" = "#6787a7",
+  "Emerging" = "#c46a4e"
+)
+
+inflation_bucket_order <- c("Under 2%", "2-5%", "5-10%", "Over 10%")
+inflation_matrix_order <- rev(inflation_bucket_order)
+policy_response_order <- c("Rates Falling", "Rates Stable", "Rates Rising")
+
+build_heatmap_panel <- function(group_name) {
+  plot_data <- expand_grid(
+    shock_index,
+    asset_class = asset_order
+  ) |>
+    left_join(
+      shock_heatmap |>
+        filter(as.character(market_group) == group_name) |>
+        mutate(asset_class = as.character(asset_class)),
+      by = c("year", "shock_event", "shock_label", "asset_class")
+    ) |>
+    arrange(
+      factor(shock_label, levels = shock_order),
+      factor(asset_class, levels = asset_order)
+    ) |>
+    mutate(
+      market_group = group_name,
+      n = replace_na(n, 0L),
+      hover_text = paste0(
+        "<b>Shock event:</b> ", shock_event, "<br>",
+        "<b>Year:</b> ", year, "<br>",
+        "<b>Market group:</b> ", market_group, "<br>",
+        "<b>Asset class:</b> ", asset_class, "<br>",
+        "<b>Average return:</b> ", formatC(avg_return, format = "f", digits = 2), "%<br>",
+        "<b>Observations:</b> ", comma(n)
+      )
+    )
+
+  list(
+    x = asset_order,
+    y = shock_order,
+    z = matrix(plot_data$avg_return, nrow = nrow(shock_index), byrow = TRUE),
+    text = matrix(plot_data$hover_text, nrow = nrow(shock_index), byrow = TRUE)
+  )
+}
+
+make_story_heatmap <- function(group_name, title_text) {
+  heatmap_panel <- build_heatmap_panel(group_name)
+
+  plot_ly(
+    x = heatmap_panel$x,
+    y = heatmap_panel$y,
+    z = heatmap_panel$z,
+    text = heatmap_panel$text,
+    type = "heatmap",
+    hoverongaps = FALSE,
+    hovertemplate = "%{text}<extra></extra>",
+    zmin = -z_limit,
+    zmax = z_limit,
+    colorscale = heatmap_colors,
+    xgap = 2,
+    ygap = 2,
+    colorbar = list(
+      title = "Avg Return (%)",
+      thickness = 18,
+      len = 0.76,
+      tickfont = list(size = 12),
+      titlefont = list(size = 13)
+    )
+  ) |>
+    layout(
+      title = list(
+        text = title_text,
+        x = 0.02,
+        font = list(
+          size = 26,
+          family = "Avenir Next, Helvetica Neue, sans-serif",
+          color = "#1f2933"
+        )
+      ),
+      paper_bgcolor = "#fbf7ef",
+      plot_bgcolor = "#fbf7ef",
+      hovermode = "closest",
+      hoverlabel = list(
+        bgcolor = "#fffdf8",
+        bordercolor = "#d8d1c2",
+        font = list(size = 13, color = "#1f2933"),
+        align = "left"
+      ),
+      xaxis = list(
+        title = "",
+        tickangle = -25,
+        tickfont = list(size = 15),
+        side = "bottom"
+      ),
+      yaxis = list(
+        title = "",
+        automargin = TRUE,
+        autorange = "reversed",
+        tickfont = list(size = 12)
+      ),
+      margin = list(l = 235, r = 78, t = 76, b = 62),
+      autosize = TRUE,
+      height = story_heatmap_height
+    ) |>
+    config(
+      displayModeBar = FALSE,
+      responsive = TRUE
+    )
+}
+
+build_macro_scatter_specs <- function(x_var, y_var, x_label, y_label, highlight = "all") {
+  plot_data <- macro_assets |>
+    transmute(
+      country,
+      year,
+      dev_label = factor(str_to_title(dev_level), levels = c("Developed", "Emerging")),
+      region = str_to_title(region),
+      shock_status = if_else(
+        is.na(shock_event),
+        "Non-shock year",
+        str_squish(shock_event)
+      ),
+      x_value = .data[[x_var]],
+      y_value = .data[[y_var]]
+    ) |>
+    filter(!is.na(x_value), !is.na(y_value)) |>
+    mutate(
+      hover_text = paste0(
+        "<b>Country:</b> ", country, "<br>",
+        "<b>Year:</b> ", year, "<br>",
+        "<b>Market group:</b> ", dev_label, "<br>",
+        "<b>Region:</b> ", region, "<br>",
+        "<b>", x_label, ":</b> ", formatC(x_value, format = "f", digits = 2), "<br>",
+        "<b>", y_label, ":</b> ", formatC(y_value, format = "f", digits = 2), "<br>",
+        "<b>Shock status:</b> ", shock_status
+      )
+    )
+
+  highlight <- match.arg(highlight, choices = c("all", "Developed", "Emerging"))
+
+  if (highlight == "Developed") {
+    opacity_map <- c("Developed" = 0.86, "Emerging" = 0.16)
+    size_map <- c("Developed" = 10, "Emerging" = 7)
+  } else if (highlight == "Emerging") {
+    opacity_map <- c("Developed" = 0.16, "Emerging" = 0.86)
+    size_map <- c("Developed" = 7, "Emerging" = 10)
+  } else {
+    opacity_map <- c("Developed" = 0.58, "Emerging" = 0.58)
+    size_map <- c("Developed" = 8.5, "Emerging" = 8.5)
+  }
+
+  x_range <- range(plot_data$x_value, na.rm = TRUE)
+  x_pad <- if (diff(x_range) == 0) 1 else diff(x_range) * 0.08
+  y_range <- range(plot_data$y_value, na.rm = TRUE)
+  y_pad <- if (diff(y_range) == 0) 1 else diff(y_range) * 0.08
+
+  traces <- map(c("Developed", "Emerging"), function(group_name) {
+    group_data <- plot_data |>
+      filter(dev_label == group_name)
+
+    list(
+      x = group_data$x_value,
+      y = group_data$y_value,
+      text = group_data$hover_text,
+      name = group_name,
+      type = "scatter",
+      mode = "markers",
+      hovertemplate = "%{text}<extra></extra>",
+      marker = list(
+        color = unname(macro_palette[[group_name]]),
+        size = unname(size_map[[group_name]]),
+        opacity = unname(opacity_map[[group_name]]),
+        line = list(width = 0)
+      )
+    )
+  })
+
+  list(
+    traces = traces,
+    xaxis = list(
+      title = x_label,
+      range = c(x_range[1] - x_pad, x_range[2] + x_pad),
+      tickfont = list(size = 14),
+      gridcolor = "#ded6c8",
+      zeroline = FALSE
+    ),
+    yaxis = list(
+      title = y_label,
+      range = c(y_range[1] - y_pad, y_range[2] + y_pad),
+      tickfont = list(size = 14),
+      gridcolor = "#ded6c8",
+      zeroline = FALSE
+    ),
+    shapes = list(
+      list(
+        type = "line",
+        x0 = x_range[1] - x_pad,
+        x1 = x_range[2] + x_pad,
+        y0 = 0,
+        y1 = 0,
+        line = list(color = "#9a9183", width = 1.2, dash = "dot")
+      )
+    )
+  )
+}
+
+make_macro_scatter <- function(x_var, y_var, x_label, y_label, title_text, highlight = "all") {
+  specs <- build_macro_scatter_specs(
+    x_var = x_var,
+    y_var = y_var,
+    x_label = x_label,
+    y_label = y_label,
+    highlight = highlight
+  )
+
+  scatter_plot <- plot_ly()
+
+  for (trace in specs$traces) {
+    scatter_plot <- scatter_plot |>
+      add_trace(
+        x = trace$x,
+        y = trace$y,
+        text = trace$text,
+        name = trace$name,
+        type = trace$type,
+        mode = trace$mode,
+        hovertemplate = trace$hovertemplate,
+        marker = trace$marker,
+        showlegend = TRUE
+      )
+  }
+
+  scatter_plot |>
+    layout(
+      title = list(
+        text = title_text,
+        x = 0.02,
+        font = list(
+          size = 26,
+          family = "Avenir Next, Helvetica Neue, sans-serif",
+          color = "#1f2933"
+        )
+      ),
+      paper_bgcolor = "#fbf7ef",
+      plot_bgcolor = "#fbf7ef",
+      hovermode = "closest",
+      hoverlabel = list(
+        bgcolor = "#fffdf8",
+        bordercolor = "#d8d1c2",
+        font = list(size = 13, color = "#1f2933"),
+        align = "left"
+      ),
+      legend = list(
+        orientation = "h",
+        x = 0.02,
+        y = 1.02,
+        bgcolor = "rgba(251,247,239,0.85)",
+        font = list(size = 13)
+      ),
+      xaxis = specs$xaxis,
+      yaxis = specs$yaxis,
+      shapes = specs$shapes,
+      margin = list(l = 82, r = 32, t = 92, b = 76),
+      autosize = TRUE,
+      height = story_scatter_height
+    ) |>
+    config(
+      displayModeBar = FALSE,
+      responsive = TRUE
+    )
+}
+
+regime_asset_long <- macro_assets |>
+  arrange(country, year) |>
+  group_by(country) |>
+  mutate(policy_change = policy_rate - lag(policy_rate)) |>
+  ungroup() |>
+  mutate(
+    dev_label = str_to_title(dev_level),
+    inflation_bucket = case_when(
+      inflation < 2 ~ "Under 2%",
+      inflation < 5 ~ "2-5%",
+      inflation < 10 ~ "5-10%",
+      inflation >= 10 ~ "Over 10%",
+      TRUE ~ NA_character_
+    ),
+    policy_response = case_when(
+      policy_change > 0.25 ~ "Rates Rising",
+      policy_change < -0.25 ~ "Rates Falling",
+      TRUE ~ "Rates Stable"
+    )
+  ) |>
+  filter(!is.na(policy_change), !is.na(inflation_bucket)) |>
+  pivot_longer(
+    cols = c(equities, bonds, real_estate, commodities, cash),
+    names_to = "asset_var",
+    values_to = "asset_return"
+  ) |>
+  filter(!is.na(asset_return)) |>
+  mutate(
+    asset_class = case_when(
+      asset_var == "equities" ~ "Equities",
+      asset_var == "bonds" ~ "Bonds",
+      asset_var == "real_estate" ~ "Real Estate",
+      asset_var == "commodities" ~ "Commodities",
+      asset_var == "cash" ~ "Cash",
+      TRUE ~ asset_var
+    ),
+    inflation_bucket = factor(inflation_bucket, levels = inflation_bucket_order),
+    policy_response = factor(policy_response, levels = policy_response_order)
+  )
+
+regime_asset_long <- bind_rows(
+  regime_asset_long |>
+    mutate(market_group = "All Markets"),
+  regime_asset_long |>
+    mutate(market_group = dev_label)
+) |>
+  mutate(
+    market_group = factor(
+      market_group,
+      levels = c("All Markets", "Developed", "Emerging")
+    )
+  )
+
+regime_summary <- regime_asset_long |>
+  group_by(market_group, asset_var, asset_class, inflation_bucket, policy_response) |>
+  summarize(
+    avg_return = mean(asset_return, na.rm = TRUE),
+    n = n(),
+    avg_inflation = mean(inflation, na.rm = TRUE),
+    avg_policy_change = mean(policy_change, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+danger_regime_asset_summary <- regime_asset_long |>
+  filter(
+    as.character(inflation_bucket) %in% c("5-10%", "Over 10%"),
+    as.character(policy_response) == "Rates Rising"
+  ) |>
+  group_by(market_group, asset_var, asset_class) |>
+  summarize(
+    avg_return = mean(asset_return, na.rm = TRUE),
+    n = n(),
+    avg_inflation = mean(inflation, na.rm = TRUE),
+    avg_policy_change = mean(policy_change, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+regime_z_limit <- regime_summary |>
+  summarize(max_abs = max(abs(avg_return), na.rm = TRUE)) |>
+  pull(max_abs)
+
+if (!is.finite(regime_z_limit) || regime_z_limit == 0) {
+  regime_z_limit <- 5
+}
+
+regime_z_limit <- ceiling(regime_z_limit / 5) * 5
+
+build_regime_matrix_panel <- function(asset_var, asset_label, market_group = "All Markets") {
+  plot_data <- expand_grid(
+    inflation_bucket = factor(inflation_matrix_order, levels = inflation_matrix_order),
+    policy_response = factor(policy_response_order, levels = policy_response_order)
+  ) |>
+    left_join(
+      regime_summary |>
+        filter(
+          asset_var == .env$asset_var,
+          as.character(market_group) == .env$market_group
+        ) |>
+        mutate(
+          inflation_bucket = factor(
+            as.character(inflation_bucket),
+            levels = inflation_matrix_order
+          ),
+          policy_response = factor(
+            as.character(policy_response),
+            levels = policy_response_order
+          )
+        ),
+      by = c("inflation_bucket", "policy_response")
+    ) |>
+    arrange(inflation_bucket, policy_response) |>
+    mutate(
+      asset_class = asset_label,
+      market_group = market_group,
+      n = replace_na(n, 0L),
+      hover_text = paste0(
+        "<b>Inflation regime:</b> ", inflation_bucket, "<br>",
+        "<b>Policy response:</b> ", policy_response, "<br>",
+        "<b>Asset class:</b> ", asset_class, "<br>",
+        "<b>Market group:</b> ", market_group, "<br>",
+        "<b>Average return:</b> ", formatC(avg_return, format = "f", digits = 2), "%<br>",
+        "<b>Observations:</b> ", comma(n), "<br>",
+        "<b>Average inflation:</b> ", formatC(avg_inflation, format = "f", digits = 2), "%<br>",
+        "<b>Average policy change:</b> ", formatC(avg_policy_change, format = "f", digits = 2), " pts"
+      )
+    )
+
+  list(
+    x = policy_response_order,
+    y = inflation_matrix_order,
+    z = matrix(
+      plot_data$avg_return,
+      nrow = length(inflation_matrix_order),
+      byrow = TRUE
+    ),
+    text = matrix(
+      plot_data$hover_text,
+      nrow = length(inflation_matrix_order),
+      byrow = TRUE
+    )
+  )
+}
+
+make_regime_matrix <- function(asset_var, asset_label, market_group = "All Markets", title_text) {
+  matrix_panel <- build_regime_matrix_panel(
+    asset_var = asset_var,
+    asset_label = asset_label,
+    market_group = market_group
+  )
+
+  plot_ly(
+    x = matrix_panel$x,
+    y = matrix_panel$y,
+    z = matrix_panel$z,
+    text = matrix_panel$text,
+    type = "heatmap",
+    hoverongaps = FALSE,
+    hovertemplate = "%{text}<extra></extra>",
+    zmin = -regime_z_limit,
+    zmax = regime_z_limit,
+    colorscale = heatmap_colors,
+    xgap = 3,
+    ygap = 3,
+    colorbar = list(
+      title = "Avg Return (%)",
+      thickness = 18,
+      len = 0.74,
+      tickfont = list(size = 12),
+      titlefont = list(size = 13)
+    )
+  ) |>
+    layout(
+      title = list(
+        text = title_text,
+        x = 0.02,
+        font = list(
+          size = 25,
+          family = "Avenir Next, Helvetica Neue, sans-serif",
+          color = "#1f2933"
+        )
+      ),
+      paper_bgcolor = "#fbf7ef",
+      plot_bgcolor = "#fbf7ef",
+      hovermode = "closest",
+      hoverlabel = list(
+        bgcolor = "#fffdf8",
+        bordercolor = "#d8d1c2",
+        font = list(size = 13, color = "#1f2933"),
+        align = "left"
+      ),
+      xaxis = list(
+        title = "",
+        tickfont = list(size = 14)
+      ),
+      yaxis = list(
+        title = "",
+        autorange = "reversed",
+        tickfont = list(size = 14)
+      ),
+      margin = list(l = 120, r = 76, t = 84, b = 62),
+      autosize = TRUE,
+      height = 530
+    ) |>
+    config(
+      displayModeBar = FALSE,
+      responsive = TRUE
+    )
+}
+
+make_regime_matrix_callout <- function(
+  asset_var,
+  asset_label,
+  market_group = "All Markets",
+  title_text,
+  annotation_text = "Danger zone: inflation + rising rates"
+) {
+  make_regime_matrix(
+    asset_var = asset_var,
+    asset_label = asset_label,
+    market_group = market_group,
+    title_text = title_text
+  ) |>
+    layout(
+      annotations = list(
+        list(
+          x = "Rates Rising",
+          y = "Over 10%",
+          xref = "x",
+          yref = "y",
+          text = annotation_text,
+          showarrow = TRUE,
+          arrowhead = 2,
+          arrowwidth = 1.2,
+          arrowcolor = "#8b2f23",
+          ax = -120,
+          ay = -55,
+          bgcolor = "rgba(255,253,248,0.96)",
+          bordercolor = "#d8d1c2",
+          borderwidth = 1,
+          font = list(size = 12, color = "#1f2933"),
+          align = "left"
+        )
+      )
+    )
+}
+
+make_danger_regime_bars <- function(market_group = "All Markets") {
+  bar_order <- c("Bonds", "Cash", "Commodities", "Equities", "Real Estate")
+
+  bar_data <- danger_regime_asset_summary |>
+    filter(as.character(market_group) == .env$market_group) |>
+    mutate(
+      asset_class = factor(asset_class, levels = bar_order),
+      bar_color = case_when(
+        avg_return >= 0 ~ "#2f8f60",
+        TRUE ~ "#b74b43"
+      ),
+      hover_text = paste0(
+        "<b>Asset class:</b> ", asset_class, "<br>",
+        "<b>Market group:</b> ", market_group, "<br>",
+        "<b>Average return:</b> ", formatC(avg_return, format = "f", digits = 2), "%<br>",
+        "<b>Observations:</b> ", comma(n), "<br>",
+        "<b>Average inflation:</b> ", formatC(avg_inflation, format = "f", digits = 2), "%<br>",
+        "<b>Average policy change:</b> ", formatC(avg_policy_change, format = "f", digits = 2), " pts"
+      )
+    ) |>
+    arrange(asset_class)
+
+  plot_ly(
+    data = bar_data,
+    x = ~asset_class,
+    y = ~avg_return,
+    hovertext = ~hover_text,
+    type = "bar",
+    hovertemplate = "%{hovertext}<extra></extra>",
+    marker = list(color = bar_data$bar_color)
+  ) |>
+    layout(
+      title = list(
+        text = paste0(
+          "What Holds Up When Inflation Meets Rising Rates?",
+          "<br><sup>Average asset returns in high-inflation, tightening regimes</sup>"
+        ),
+        x = 0.02,
+        font = list(
+          size = 25,
+          family = "Avenir Next, Helvetica Neue, sans-serif",
+          color = "#1f2933"
+        )
+      ),
+      paper_bgcolor = "#fbf7ef",
+      plot_bgcolor = "#fbf7ef",
+      hovermode = "closest",
+      hoverlabel = list(
+        bgcolor = "#fffdf8",
+        bordercolor = "#d8d1c2",
+        font = list(size = 13, color = "#1f2933"),
+        align = "left"
+      ),
+      xaxis = list(title = "", tickfont = list(size = 14)),
+      yaxis = list(
+        title = "Average Return (%)",
+        tickfont = list(size = 14),
+        zeroline = TRUE,
+        zerolinecolor = "#988f81",
+        zerolinewidth = 1.2,
+        gridcolor = "#ddd3c3"
+      ),
+      margin = list(l = 86, r = 32, t = 94, b = 72),
+      autosize = TRUE,
+      height = 520
+    ) |>
+    config(
+      displayModeBar = FALSE,
+      responsive = TRUE
+    )
+}
+```
+
+```{css}
+body {
+  background: #fbf7ef;
+  color: #1f2933;
+  font-family: "Avenir Next", "Helvetica Neue", "Segoe UI", sans-serif;
+}
+
+.quarto-title-block {
+  padding: 5.5rem 0 2rem;
+  text-align: center;
+}
+
+.quarto-title-block .title {
+  font-size: clamp(2.9rem, 6vw, 4.8rem);
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+}
+
+.quarto-title-block .subtitle {
+  color: #5e655f;
+  font-size: 1.2rem;
+  max-width: 46rem;
+  margin: 1rem auto 0;
+}
+
+.landing-intro {
+  max-width: 42rem;
+  margin: 0 auto 8rem;
+}
+
+.landing-intro p {
+  font-size: 1.2rem;
+  line-height: 1.7;
+  color: #2d3a36;
+}
+
+.question-card {
+  min-height: 40vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto 2rem;
+  padding: 2.5rem 1.5rem 3.5rem;
+}
+
+.question-card h2 {
+  font-size: clamp(2.2rem, 4.8vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  max-width: 16ch;
+  margin: 0 auto;
+  color: #1f2933;
+}
+
+.cr-section {
+  background: #fbf7ef;
+}
+
+.cr-section p {
+  font-size: 1.28rem;
+  line-height: 1.62;
+  max-width: 25rem;
+  color: #273633;
+}
+
+.cr-section h2 {
+  font-size: 2.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.cr-section .narrative-col .trigger .narrative {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.cr-section strong {
+  color: #8b2f23;
+  font-weight: 700;
+}
+
+.cell-output-display {
+  background: #fbf7ef;
+}
+
+.plotly.html-widget {
+  width: 100% !important;
+  min-height: 720px !important;
+}
+
+.cr-section .plotly.html-widget {
+  min-height: 545px !important;
+}
+
+.cr-section .sticky-col,
+.cr-section .sticky-col .sticky-col-stack,
+.cr-section .sticky-col .sticky-col-stack .sticky,
+.cr-section .sticky-col .sticky-col-stack .sticky .cell-output-display {
+  overflow: visible !important;
+}
+
+.cr-section .sticky-col .plotly.html-widget,
+.cr-section .sticky-col .js-plotly-plot,
+.cr-section .sticky-col .plot-container,
+.cr-section .sticky-col .svg-container,
+.cr-section .sticky-col .main-svg,
+.cr-section .sticky-col .hoverlayer {
+  overflow: visible !important;
+}
+
+.section-takeaway {
+  max-width: 42rem;
+  margin: 3.5rem auto 4.5rem;
+}
+
+.section-takeaway-strong {
+  max-width: 54rem;
+  margin: 4rem auto 4.75rem;
+  text-align: center;
+}
+
+.section-takeaway-strong p {
+  font-size: clamp(1.45rem, 2.2vw, 1.85rem);
+  line-height: 1.55;
+  color: #22322d;
+}
+
+.section-takeaway p {
+  font-size: 1.3rem;
+  line-height: 1.65;
+  color: #273633;
+}
+
+.section-bridge,
+.section-transition {
+  max-width: 44rem;
+  margin: 3rem auto 4.5rem;
+}
+
+.section-bridge p,
+.section-transition p {
+  font-size: 1.22rem;
+  line-height: 1.7;
+  color: #2d3a36;
+}
+
+.checkpoint-centered {
+  max-width: 1160px;
+  margin: 0 auto 4.5rem;
+}
+
+.section-conclusion {
+  max-width: 50rem;
+  margin: 4rem auto 6rem;
+  text-align: center;
+}
+
+.section-conclusion p {
+  font-size: 1.32rem;
+  line-height: 1.72;
+  color: #263430;
+}
+
+.section-conclusion .closing-line {
+  margin-top: 1.75rem;
+  font-size: 1.42rem;
+  line-height: 1.65;
+  color: #22322d;
+}
+
+h2 {
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 900px) {
+  .landing-intro {
+    margin-bottom: 5rem;
+  }
+
+  .question-card {
+    min-height: 32vh;
+    padding: 1.5rem 1.25rem 2.5rem;
+  }
+
+  .cr-section p {
+    max-width: 100%;
+  }
+
+  .plotly.html-widget {
+    min-height: 620px !important;
+  }
+
+  .cr-section .plotly.html-widget {
+    min-height: 500px !important;
+  }
+}
+```
+
+::: {.landing-intro}
+Asset returns are often discussed as if they respond predictably to crises, inflation, or interest rates. But across 40 years, 30 countries, and five asset classes, the data suggests a more conditional story: **what matters is the full macro regime.**
+
+A crisis is not just a crisis. Some shocks are driven by collapsing growth, some by financial stress, and others by inflation and interest-rate pressure.
+:::
+
+```{=html}
+<section class="question-card">
+  <h2>Do macro shocks affect all investments equally?</h2>
+</section>
+```
+
+::::{.cr-section}
+
+## 1. Crises do not affect all assets equally
+
+Crisis years are often treated as one broad **risk-off** category. But the heatmap shows a more complicated story: different assets respond differently even within the same shock. @cr-all-markets
+
+During growth and financial stress episodes, **equities and real estate** often weaken most, while **cash, commodities, or bonds** can move differently. @cr-all-markets
+
+:::{#cr-all-markets}
+```{r}
+#| label: all-markets-heatmap
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5.5
+#| out-width: "100%"
+
+make_story_heatmap(
+  group_name = "All Markets",
+  title_text = "Macro Shock Returns: All Markets"
+)
+```
+:::
+
+::::
+
+::::{.cr-section}
+
+## Developed Markets
+
+In **developed markets**, the pattern is more contained. Bonds and cash can help absorb some shocks, but that protection becomes less reliable when inflation and rates dominate. @cr-developed-markets
+
+:::{#cr-developed-markets}
+```{r}
+#| label: developed-heatmap
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5.5
+#| out-width: "100%"
+
+make_story_heatmap(
+  group_name = "Developed",
+  title_text = "Macro Shock Returns: Developed Markets"
+)
+```
+:::
+
+::::
+
+::::{.cr-section}
+
+## Emerging Markets
+
+In **emerging markets**, global shocks interact with **inflation, currency pressure, and commodity exposure**, creating more uneven asset outcomes. @cr-emerging-markets
+
+:::{#cr-emerging-markets}
+```{r}
+#| label: emerging-heatmap
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5.5
+#| out-width: "100%"
+
+make_story_heatmap(
+  group_name = "Emerging",
+  title_text = "Macro Shock Returns: Emerging Markets"
+)
+```
+:::
+
+::::
+
+::: {.section-takeaway-strong}
+The takeaway: a crisis year tells us that something broke, but not how it broke. **Asset performance depends on the macro pressure behind the shock: growth stress, financial stress, inflation, or rate pressure.**
+:::
+
+## Explore the shock map
+
+Hover over cells to see exact returns, and switch between all, developed, and emerging markets.
+
+```{r}
+#| label: interactive-checkpoint
+#| echo: false
+#| fig-width: 11
+#| fig-height: 7
+#| out-width: "100%"
+
+all_panel <- build_heatmap_panel("All Markets")
+dev_panel <- build_heatmap_panel("Developed")
+em_panel <- build_heatmap_panel("Emerging")
+
+plot_ly(
+  x = all_panel$x,
+  y = all_panel$y,
+  z = all_panel$z,
+  text = all_panel$text,
+  type = "heatmap",
+  hoverongaps = FALSE,
+  hovertemplate = "%{text}<extra></extra>",
+  visible = TRUE,
+  zmin = -z_limit,
+  zmax = z_limit,
+  colorscale = heatmap_colors,
+  xgap = 2,
+  ygap = 2,
+  colorbar = list(
+    title = "Avg Return (%)",
+    thickness = 18,
+    len = 0.76
+  )
+) |>
+  add_trace(
+    x = dev_panel$x,
+    y = dev_panel$y,
+    z = dev_panel$z,
+    text = dev_panel$text,
+    type = "heatmap",
+    hoverongaps = FALSE,
+    hovertemplate = "%{text}<extra></extra>",
+    visible = FALSE,
+    zmin = -z_limit,
+    zmax = z_limit,
+    colorscale = heatmap_colors,
+    xgap = 2,
+    ygap = 2,
+    showscale = FALSE
+  ) |>
+  add_trace(
+    x = em_panel$x,
+    y = em_panel$y,
+    z = em_panel$z,
+    text = em_panel$text,
+    type = "heatmap",
+    hoverongaps = FALSE,
+    hovertemplate = "%{text}<extra></extra>",
+    visible = FALSE,
+    zmin = -z_limit,
+    zmax = z_limit,
+    colorscale = heatmap_colors,
+    xgap = 2,
+    ygap = 2,
+    showscale = FALSE
+) |>
+  layout(
+    paper_bgcolor = "#fbf7ef",
+    plot_bgcolor = "#fbf7ef",
+    hovermode = "closest",
+    hoverlabel = list(
+      bgcolor = "#fffdf8",
+      bordercolor = "#d8d1c2",
+      font = list(size = 13, color = "#1f2933"),
+      align = "left"
+    ),
+    xaxis = list(title = "", tickangle = -25, tickfont = list(size = 15)),
+    yaxis = list(
+      title = "",
+      automargin = TRUE,
+      autorange = "reversed",
+      tickfont = list(size = 13)
+    ),
+    margin = list(l = 235, r = 80, t = 78, b = 74),
+    autosize = TRUE,
+    height = interactive_heatmap_height,
+    updatemenus = list(
+      list(
+        type = "buttons",
+        direction = "right",
+        x = 0,
+        y = 1.12,
+        showactive = TRUE,
+        bgcolor = "#f3ede1",
+        bordercolor = "#d8d1c2",
+        font = list(size = 13, color = "#1f2933"),
+        pad = list(r = 8, t = 0, b = 14),
+        buttons = list(
+          list(
+            method = "update",
+            args = list(list(visible = c(TRUE, FALSE, FALSE))),
+            label = "All Markets"
+          ),
+          list(
+            method = "update",
+            args = list(list(visible = c(FALSE, TRUE, FALSE))),
+            label = "Developed"
+          ),
+          list(
+            method = "update",
+            args = list(list(visible = c(FALSE, FALSE, TRUE))),
+            label = "Emerging"
+          )
+        )
+      )
+    )
+  ) |>
+  config(displayModeBar = FALSE, responsive = TRUE)
+```
+
+::: {.section-bridge}
+Next, we ask why reactions differ across countries. The answer begins with context: developed and emerging markets do not experience macro signals on the same scale.
+:::
+
+```{=html}
+<section class="question-card">
+  <h2>Does the same macro signal mean the same thing everywhere?</h2>
+</section>
+```
+
+::::{.cr-section}
+
+## 2. Country context changes the meaning of macro signals
+
+After seeing that shocks reshuffle asset winners and losers, we now ask why reactions differ across countries. One reason is that countries enter shocks from very different macro starting points. @cr-inflation-all
+
+:::{#cr-inflation-all}
+```{r}
+#| label: inflation-all-scatter
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5.8
+#| out-width: "100%"
+
+make_macro_scatter(
+  x_var = "inflation",
+  y_var = "equities",
+  x_label = "Inflation (%)",
+  y_label = "Equities Return (%)",
+  title_text = "Inflation Lives in Different Ranges Across Markets",
+  highlight = "all"
+)
+```
+:::
+
+::::
+
+::::{.cr-section}
+
+## Developed Inflation Context
+
+Inflation makes that contrast visible. **Developed markets** cluster in a relatively narrow inflation range, where inflation often reflects overheating or ordinary tightening pressure. @cr-inflation-developed
+
+:::{#cr-inflation-developed}
+```{r}
+#| label: inflation-developed-scatter
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5.8
+#| out-width: "100%"
+
+make_macro_scatter(
+  x_var = "inflation",
+  y_var = "equities",
+  x_label = "Inflation (%)",
+  y_label = "Equities Return (%)",
+  title_text = "Developed Markets Cluster in Narrower Inflation Regimes",
+  highlight = "Developed"
+)
+```
+:::
+
+::::
+
+::::{.cr-section}
+
+## Emerging Inflation Context
+
+Emerging markets spread much farther into high-inflation environments. In these cases, inflation may signal deeper instability, currency pressure, or crisis risk. @cr-inflation-emerging
+
+:::{#cr-inflation-emerging}
+```{r}
+#| label: inflation-emerging-scatter
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5.8
+#| out-width: "100%"
+
+make_macro_scatter(
+  x_var = "inflation",
+  y_var = "equities",
+  x_label = "Inflation (%)",
+  y_label = "Equities Return (%)",
+  title_text = "Emerging Markets Stretch Further Into High-Inflation Regimes",
+  highlight = "Emerging"
+)
+```
+:::
+
+::::
+
+::::{.cr-section}
+
+## Policy Signals
+
+Policy rates sharpen the contrast. Moderate rates in developed markets often reflect normal tightening cycles, while very high rates in emerging markets can reflect inflation defense or macro stress. @cr-policy-bonds
+
+:::{#cr-policy-bonds}
+```{r}
+#| label: policy-bonds-scatter
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5.8
+#| out-width: "100%"
+
+make_macro_scatter(
+  x_var = "policy_rate",
+  y_var = "bonds",
+  x_label = "Policy Rate (%)",
+  y_label = "Bonds Return (%)",
+  title_text = "Policy Rates Do Not Mean the Same Thing Everywhere",
+  highlight = "all"
+)
+```
+:::
+
+::::
+
+::: {.section-takeaway}
+The takeaway: macro signals need context. Developed and emerging markets operate in different ranges of inflation, rates, and stress, so the same signal is not always directly comparable.
+:::
+
+::: {.checkpoint-centered}
+## Explore macro signals across markets
+
+Hover over country-years to see the country, year, macro value, asset return, and shock status. Compare how developed and emerging markets occupy different macro ranges.
+
+```{r}
+#| label: section-two-interactive-checkpoint
+#| echo: false
+#| fig-width: 11
+#| fig-height: 7
+#| out-width: "100%"
+
+macro_views <- list(
+  list(
+    label = "Inflation vs Equities",
+    specs = build_macro_scatter_specs(
+      x_var = "inflation",
+      y_var = "equities",
+      x_label = "Inflation (%)",
+      y_label = "Equities Return (%)",
+      highlight = "all"
+    )
+  ),
+  list(
+    label = "Policy Rate vs Bonds",
+    specs = build_macro_scatter_specs(
+      x_var = "policy_rate",
+      y_var = "bonds",
+      x_label = "Policy Rate (%)",
+      y_label = "Bonds Return (%)",
+      highlight = "all"
+    )
+  ),
+  list(
+    label = "Financial Stress vs Equities",
+    specs = build_macro_scatter_specs(
+      x_var = "fin_stress_idx",
+      y_var = "equities",
+      x_label = "Financial Stress Index",
+      y_label = "Equities Return (%)",
+      highlight = "all"
+    )
+  ),
+  list(
+    label = "FX Change vs Equities",
+    specs = build_macro_scatter_specs(
+      x_var = "fx_change",
+      y_var = "equities",
+      x_label = "FX Change (%)",
+      y_label = "Equities Return (%)",
+      highlight = "all"
+    )
+  )
+)
+
+macro_checkpoint <- plot_ly()
+
+for (i in seq_along(macro_views)) {
+  view_specs <- macro_views[[i]]$specs
+
+  for (trace in view_specs$traces) {
+    macro_checkpoint <- macro_checkpoint |>
+      add_trace(
+        x = trace$x,
+        y = trace$y,
+        text = trace$text,
+        name = trace$name,
+        type = trace$type,
+        mode = trace$mode,
+        hovertemplate = trace$hovertemplate,
+        marker = trace$marker,
+        visible = i == 1,
+        showlegend = TRUE
+      )
+  }
+}
+
+macro_buttons <- map(seq_along(macro_views), function(i) {
+  visible_traces <- rep(FALSE, length(macro_views) * 2)
+  visible_traces[((i - 1) * 2 + 1):((i - 1) * 2 + 2)] <- TRUE
+
+  list(
+    method = "update",
+    args = list(
+      list(visible = visible_traces),
+      list(
+        xaxis = macro_views[[i]]$specs$xaxis,
+        yaxis = macro_views[[i]]$specs$yaxis,
+        shapes = macro_views[[i]]$specs$shapes
+      )
+    ),
+    label = macro_views[[i]]$label
+  )
+})
+
+macro_checkpoint |>
+  layout(
+    paper_bgcolor = "#fbf7ef",
+    plot_bgcolor = "#fbf7ef",
+    hovermode = "closest",
+    hoverlabel = list(
+      bgcolor = "#fffdf8",
+      bordercolor = "#d8d1c2",
+      font = list(size = 13, color = "#1f2933"),
+      align = "left"
+    ),
+    legend = list(
+      orientation = "h",
+      x = 0.5,
+      xanchor = "center",
+      y = 1.03,
+      bgcolor = "rgba(251,247,239,0.85)",
+      font = list(size = 13)
+    ),
+    xaxis = macro_views[[1]]$specs$xaxis,
+    yaxis = macro_views[[1]]$specs$yaxis,
+    shapes = macro_views[[1]]$specs$shapes,
+    margin = list(l = 96, r = 96, t = 92, b = 78),
+    autosize = TRUE,
+    height = interactive_scatter_height,
+    updatemenus = list(
+      list(
+        type = "buttons",
+        direction = "right",
+        x = 0.5,
+        xanchor = "center",
+        y = 1.15,
+        showactive = TRUE,
+        bgcolor = "#f3ede1",
+        bordercolor = "#d8d1c2",
+        font = list(size = 13, color = "#1f2933"),
+        pad = list(r = 8, t = 0, b = 14),
+        buttons = macro_buttons
+      )
+    )
+  ) |>
+  config(displayModeBar = FALSE, responsive = TRUE)
+```
+:::
+
+::: {.section-transition}
+Country context helps explain why macro signals do not translate into asset returns the same way everywhere. The next step is to zoom in on one specific mechanism: inflation and policy response.
+:::
+
+```{=html}
+<section class="question-card">
+  <h2>When do bonds stop acting like a hedge?</h2>
+</section>
+```
+
+::::{.cr-section}
+
+We have seen that crises differ, and that macro signals need country context. Now we zoom into one specific case: bonds during inflation. Bonds are often treated as defensive assets, but that protection depends on the policy regime. @cr-bonds-regime
+
+Start with bonds. In low-inflation environments, bond returns are generally more stable, even when policy moves around. @cr-bonds-regime
+
+:::{#cr-bonds-regime}
+```{r}
+#| label: bonds-regime-matrix
+#| echo: false
+#| fig-width: 10.5
+#| fig-height: 5.5
+#| out-width: "100%"
+
+make_regime_matrix(
+  asset_var = "bonds",
+  asset_label = "Bonds",
+  market_group = "All Markets",
+  title_text = "Bonds Depend on the Inflation-Policy Regime"
+)
+```
+:::
+
+::::
+
+::::{.cr-section}
+
+## The Break
+
+The story changes when inflation rises. Higher inflation alone matters, but the bigger break comes when central banks respond by raising rates. @cr-bonds-danger
+
+When inflation is paired with rising rates, **bonds can stop acting like a hedge.** The same asset that cushions growth shocks can become vulnerable during inflation shocks. @cr-bonds-danger
+
+:::{#cr-bonds-danger}
+```{r}
+#| label: bonds-danger-matrix
+#| echo: false
+#| fig-width: 10.5
+#| fig-height: 5.5
+#| out-width: "100%"
+
+make_regime_matrix_callout(
+  asset_var = "bonds",
+  asset_label = "Bonds",
+  market_group = "All Markets",
+  title_text = "The Danger Zone for Bonds: Inflation + Rising Rates"
+)
+```
+:::
+
+::::
+
+::::{.cr-section}
+
+## What Holds Up Instead?
+
+Compare that with **cash or commodities.** Cash can benefit as rates rise, while commodities may hold up better when inflation reflects real-economy pressure. @cr-danger-bars
+
+Inside high-inflation, tightening regimes, bonds are not the only outcome. The comparison shows more clearly which assets hold up when the bond hedge breaks. @cr-danger-bars
+
+:::{#cr-danger-bars}
+```{r}
+#| label: danger-regime-bars
+#| echo: false
+#| fig-width: 10.5
+#| fig-height: 5.5
+#| out-width: "100%"
+
+make_danger_regime_bars(
+  market_group = "All Markets"
+)
+```
+:::
+
+::::
+
+::: {.section-takeaway}
+The takeaway: inflation is not a complete explanation by itself. Asset returns depend on the interaction between inflation and policy response.
+:::
+
+::: {.checkpoint-centered}
+## Explore inflation-policy regimes
+
+Switch asset classes to see how the same inflation-policy regime affects bonds, equities, real estate, commodities, and cash differently.
+
+```{r}
+#| label: section-three-interactive-checkpoint
+#| echo: false
+#| fig-width: 10.5
+#| fig-height: 6.8
+#| out-width: "100%"
+
+regime_assets <- list(
+  list(var = "bonds", label = "Bonds"),
+  list(var = "equities", label = "Equities"),
+  list(var = "real_estate", label = "Real Estate"),
+  list(var = "commodities", label = "Commodities"),
+  list(var = "cash", label = "Cash")
+)
+
+regime_checkpoint <- plot_ly()
+
+for (i in seq_along(regime_assets)) {
+  panel <- build_regime_matrix_panel(
+    asset_var = regime_assets[[i]]$var,
+    asset_label = regime_assets[[i]]$label,
+    market_group = "All Markets"
+  )
+
+  regime_checkpoint <- regime_checkpoint |>
+    add_trace(
+      x = panel$x,
+      y = panel$y,
+      z = panel$z,
+      text = panel$text,
+      type = "heatmap",
+      hoverongaps = FALSE,
+      hovertemplate = "%{text}<extra></extra>",
+      visible = i == 1,
+      showscale = TRUE,
+      zmin = -regime_z_limit,
+      zmax = regime_z_limit,
+      colorscale = heatmap_colors,
+      xgap = 3,
+      ygap = 3,
+      colorbar = list(
+        title = "Avg Return (%)",
+        thickness = 18,
+        len = 0.74
+      )
+    )
+}
+
+regime_buttons <- map(seq_along(regime_assets), function(i) {
+  visible_traces <- rep(FALSE, length(regime_assets))
+  visible_traces[i] <- TRUE
+
+  list(
+    method = "update",
+    args = list(list(visible = visible_traces)),
+    label = regime_assets[[i]]$label
+  )
+})
+
+regime_checkpoint |>
+  layout(
+    paper_bgcolor = "#fbf7ef",
+    plot_bgcolor = "#fbf7ef",
+    hovermode = "closest",
+    hoverlabel = list(
+      bgcolor = "#fffdf8",
+      bordercolor = "#d8d1c2",
+      font = list(size = 13, color = "#1f2933"),
+      align = "left"
+    ),
+    xaxis = list(title = "", tickfont = list(size = 14)),
+    yaxis = list(
+      title = "",
+      autorange = "reversed",
+      tickfont = list(size = 14)
+    ),
+    margin = list(l = 120, r = 88, t = 72, b = 66),
+    autosize = TRUE,
+    height = 580,
+    updatemenus = list(
+      list(
+        type = "buttons",
+        direction = "right",
+        x = 0.5,
+        xanchor = "center",
+        y = 1.14,
+        showactive = TRUE,
+        bgcolor = "#f3ede1",
+        bordercolor = "#d8d1c2",
+        font = list(size = 13, color = "#1f2933"),
+        pad = list(r = 8, t = 0, b = 14),
+        buttons = regime_buttons
+      )
+    )
+  ) |>
+  config(displayModeBar = FALSE, responsive = TRUE)
+```
+:::
+
+## What did we learn?
+
+::: {.section-conclusion}
+Across the three views, the same pattern emerges: asset performance is **regime-dependent**. A crisis label tells us that something changed, but it does not explain how assets will respond. The shock type, the country context, and the policy response all shape whether equities, bonds, commodities, real estate, or cash hold up.
+
+```{=html}
+<p class="closing-line">The better question is not simply whether there is a crisis, inflation, or rising rates. It is: <strong>what macro regime are investors actually in?</strong></p>
+```
+:::

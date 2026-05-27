@@ -257,6 +257,51 @@ joined |>
   theme(legend.position = "top")
 ```
 
+```{r}
+
+library(tidyverse)
+library(scales)
+
+usa_shock_heatmap <- asset_returns |>
+  filter(country == "USA", !is.na(shock_event)) |>
+  select(year, shock_event, equities, bonds, real_estate, commodities, cash) |>
+  pivot_longer(
+    cols = c(equities, bonds, real_estate, commodities, cash),
+    names_to = "asset_class",
+    values_to = "return"
+  ) |>
+  mutate(
+    asset_class = str_to_title(str_replace_all(asset_class, "_", " ")),
+    shock_label = paste0(year, ": ", shock_event)
+  )
+
+usa_shock_heatmap |>
+  ggplot(aes(x = asset_class, y = fct_rev(shock_label), fill = return)) +
+  geom_tile(color = "white", linewidth = 0.7) +
+  scale_fill_gradient2(
+    low = "#d73027",
+    mid = "white",
+    high = "#1a9850",
+    midpoint = 0,
+    labels = label_percent(scale = 1)
+  ) +
+  labs(
+    title = "USA Asset Returns During Macro Shock Years",
+    subtitle = "Red = negative returns, green = positive returns, white = near zero",
+    x = "Asset Class",
+    y = "Shock Event",
+    fill = "Return"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    plot.title = element_text(face = "bold")
+  )
+
+
+```
+
 ## Conclusion + Next Steps
 
 Our initial exploration suggests that the dataset contains meaningful variation across macroeconomic environments, countries, and asset classes that can support a strong interactive storytelling project. Early analysis indicates that different types of macro shocks produce different cross-asset outcomes, that developed and emerging markets operate under substantially different macro regimes, and that policy response may play an important role in determining asset performance during inflationary periods.
