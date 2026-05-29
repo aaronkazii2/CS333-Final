@@ -935,9 +935,9 @@ A crisis is not just a crisis. Some shocks are driven by collapsing growth, some
 
 ## 1. Crises do not affect all assets equally
 
-Crisis years are often treated as one broad **risk-off** category. But the heatmap shows a more complicated story: different assets respond differently even within the same shock. @cr-all-markets
+Crisis years are often treated as one broad <span style="font-weight:bold;">risk-off</span> category. But the heatmap shows a more complicated story: different assets respond differently even within the same shock. @cr-all-markets
 
-During growth and financial stress episodes, **equities and real estate** often weaken most, while **cash, commodities, or bonds** can move differently. @cr-all-markets
+During growth and financial stress episodes, <span style="font-weight:bold;">equities and real estate</span> often weaken most, while <span style="font-weight:bold;">cash, commodities, or bonds</span> can move differently. @cr-all-markets
 
 :::{#cr-all-markets}
 ```{r}
@@ -954,13 +954,9 @@ make_story_heatmap(
 ```
 :::
 
-::::
-
-::::{.cr-section}
-
 ## Developed Markets
 
-In **developed markets**, the pattern is more contained. Bonds and cash can help absorb some shocks, but that protection becomes less reliable when inflation and rates dominate. @cr-developed-markets
+In <span style="color:#6787a7; font-weight:bold;">developed markets</span>, the pattern is more contained. Bonds and cash can help absorb some shocks, but that protection becomes less reliable when inflation and rates dominate. @cr-developed-markets
 
 :::{#cr-developed-markets}
 ```{r}
@@ -977,13 +973,9 @@ make_story_heatmap(
 ```
 :::
 
-::::
-
-::::{.cr-section}
-
 ## Emerging Markets
 
-In **emerging markets**, global shocks interact with **inflation, currency pressure, and commodity exposure**, creating more uneven asset outcomes. @cr-emerging-markets
+In <span style="color: #c46a4e; font-weight: bold;">emerging markets</span>, global shocks interact with <span style="font-weight:bold;">inflation, currency pressure, and commodity exposure</span>, creating more uneven asset outcomes. @cr-emerging-markets
 
 :::{#cr-emerging-markets}
 ```{r}
@@ -1008,7 +1000,7 @@ The takeaway: a crisis year tells us that something broke, but not how it broke.
 
 ## Explore the shock map
 
-Hover over cells to see exact returns, and switch between all, developed, and emerging markets.
+Hover over cells to see exact returns, and switch between all, <span style="color: #6787a7; font-weight:bold;">developed</span>, and <span style="color: #c46a4e; font-weight:bold;">emerging</span> markets.
 
 ```{r}
 #| label: interactive-checkpoint
@@ -1128,7 +1120,7 @@ plot_ly(
 ```
 
 ::: {.section-bridge}
-Next, we ask why reactions differ across countries. The answer begins with context: developed and emerging markets do not experience macro signals on the same scale.
+Next, we ask why reactions differ across countries. The answer begins with context: <span style="color: #6787a7; font-weight:bold;">developed</span> and <span style="color: #c46a4e; font-weight:bold;">emerging</span> markets do not experience macro signals on the same scale.
 :::
 
 ```{=html}
@@ -1162,13 +1154,9 @@ make_macro_scatter(
 ```
 :::
 
-::::
-
-::::{.cr-section}
-
 ## Developed Inflation Context
 
-Inflation makes that contrast visible. **Developed markets** cluster in a relatively narrow inflation range, where inflation often reflects overheating or ordinary tightening pressure. @cr-inflation-developed
+Inflation makes that contrast visible. <span style="color:#6787a7; font-weight:bold;">Developed markets</span> cluster in a relatively narrow inflation range, where inflation often reflects overheating or ordinary tightening pressure. @cr-inflation-developed
 
 :::{#cr-inflation-developed}
 ```{r}
@@ -1189,13 +1177,9 @@ make_macro_scatter(
 ```
 :::
 
-::::
-
-::::{.cr-section}
-
 ## Emerging Inflation Context
 
-Emerging markets spread much farther into high-inflation environments. In these cases, inflation may signal deeper instability, currency pressure, or crisis risk. @cr-inflation-emerging
+<span style="color: #c46a4e; font-weight: bold;">Emerging markets</span> spread much farther into high-inflation environments. In these cases, inflation may signal deeper instability, currency pressure, or crisis risk. @cr-inflation-emerging
 
 :::{#cr-inflation-emerging}
 ```{r}
@@ -1216,13 +1200,10 @@ make_macro_scatter(
 ```
 :::
 
-::::
-
-::::{.cr-section}
 
 ## Policy Signals
 
-Policy rates sharpen the contrast. Moderate rates in developed markets often reflect normal tightening cycles, while very high rates in emerging markets can reflect inflation defense or macro stress. @cr-policy-bonds
+Policy rates sharpen the contrast. Moderate rates in <span style="color:#6787a7; font-weight:bold;">developed markets</span> often reflect normal tightening cycles, while very high rates in <span style="color: #c46a4e; font-weight: bold;">emerging markets</span> can reflect inflation defense or macro stress. @cr-policy-bonds
 
 :::{#cr-policy-bonds}
 ```{r}
@@ -1246,13 +1227,13 @@ make_macro_scatter(
 ::::
 
 ::: {.section-takeaway}
-The takeaway: macro signals need context. Developed and emerging markets operate in different ranges of inflation, rates, and stress, so the same signal is not always directly comparable.
+The takeaway: macro signals need context. <span style="color: #6787a7; font-weight:bold;">Developed</span> and <span style="color: #c46a4e; font-weight:bold;">emerging</span> markets operate in different ranges of inflation, rates, and stress, so the same signal is not always directly comparable.
 :::
 
 ::: {.checkpoint-centered}
 ## Explore macro signals across markets
 
-Hover over country-years to see the country, year, macro value, asset return, and shock status. Compare how developed and emerging markets occupy different macro ranges.
+Hover over country-years to see the country, year, macro value, asset return, and shock status. Compare how <span style="color: #6787a7; font-weight:bold;">developed</span> and <span style="color: #c46a4e; font-weight:bold;">emerging</span> markets occupy different macro ranges.
 
 ```{r}
 #| label: section-two-interactive-checkpoint
@@ -1422,15 +1403,12 @@ make_regime_matrix(
 ```
 :::
 
-::::
-
-::::{.cr-section}
 
 ## The Break
 
 The story changes when inflation rises. Higher inflation alone matters, but the bigger break comes when central banks respond by raising rates. @cr-bonds-danger
 
-When inflation is paired with rising rates, **bonds can stop acting like a hedge.** The same asset that cushions growth shocks can become vulnerable during inflation shocks. @cr-bonds-danger
+When inflation is paired with rising rates, <span style="font-weight:bold;">bonds can stop acting like a hedge.</span> The same asset that cushions growth shocks can become vulnerable during inflation shocks. @cr-bonds-danger
 
 :::{#cr-bonds-danger}
 ```{r}
@@ -1455,7 +1433,7 @@ make_regime_matrix_callout(
 
 ## What Holds Up Instead?
 
-Compare that with **cash or commodities.** Cash can benefit as rates rise, while commodities may hold up better when inflation reflects real-economy pressure. @cr-danger-bars
+Compare that with <span style="font-weight:bold;">cash or commodities.</span> Cash can benefit as rates rise, while commodities may hold up better when inflation reflects real-economy pressure. @cr-danger-bars
 
 Inside high-inflation, tightening regimes, bonds are not the only outcome. The comparison shows more clearly which assets hold up when the bond hedge breaks. @cr-danger-bars
 
