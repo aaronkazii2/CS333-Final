@@ -71,8 +71,11 @@ document.addEventListener("DOMContentLoaded", () => {
     trigger.setAttribute('data-highlight', hlzValue);
   });
     
-  // collect all sticky elements
-  const allStickies = Array.from(document.querySelectorAll(".sticky"));
+  // collect all sticky plot panels
+  const allStickyPanels = Array.from(
+    document.querySelectorAll(".sticky-col-stack > .sticky[id]")
+  );
+  initializeStickyPanels(allStickyPanels);
   
   // === Set up scrolling event listeners === //
   // scrollama() is accessible because scrollama.min.js is attached
@@ -91,13 +94,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function crTriggerStepEnter(trigger) {
-    focusedStickyName = trigger.element.getAttribute("data-focus-on")
+    const focusedStickyName = trigger.element.getAttribute("data-focus-on")
         
     // update ojs variables
     ojsTriggerIndex?.define("crTriggerIndex", trigger.index)
     ojsStickyName?.define("crActiveSticky", focusedStickyName)
       
-    updateStickies(allStickies, focusedStickyName, trigger)
+    updateStickies(allStickyPanels, focusedStickyName, trigger)
   }
   
   function crTriggerStepProgress(trigger) {
@@ -183,18 +186,56 @@ document.addEventListener("DOMContentLoaded", () => {
 // Focus effects //
 //===============//
 // A collection of functions that apply focus effects to stickies
+
+function initializeStickyPanels(allStickyPanels) {
+  allStickyPanels.forEach(panel => {
+    panel.classList.remove("cr-active");
+    panel.style.pointerEvents = "none";
+    panel.style.visibility = "hidden";
+    panel.style.zIndex = "0";
+    panel.setAttribute("aria-hidden", "true");
+  });
+
+  const stickyStacks = Array.from(document.querySelectorAll(".sticky-col-stack"));
+  stickyStacks.forEach(stack => {
+    const firstPanel = stack.querySelector(":scope > .sticky[id]");
+    if (!firstPanel) {
+      return;
+    }
+
+    firstPanel.classList.add("cr-active");
+    firstPanel.style.pointerEvents = "auto";
+    firstPanel.style.visibility = "visible";
+    firstPanel.style.zIndex = "2";
+    firstPanel.setAttribute("aria-hidden", "false");
+  });
+}
  
 // updateStickies: triggers effects on the focused sticky 
-function updateStickies(allStickies, focusedStickyName, trigger) {
+function updateStickies(allStickyPanels, focusedStickyName, trigger) {
   const focusedSticky = document.getElementById(focusedStickyName);
   if (!focusedSticky) {
     console.warn(`Could not find sticky with id '${focusedStickyName}'.`);
     return;
   }
+
+  const stickyStack = focusedSticky.closest(".sticky-col-stack");
+  if (!stickyStack) {
+    console.warn(`Could not find sticky stack for '${focusedStickyName}'.`);
+    return;
+  }
   
-  // update which sticky is active
-  allStickies.forEach(node => {node.classList.remove("cr-active")});
-  focusedSticky.classList.add("cr-active");
+  const stackPanels = allStickyPanels.filter(node => node.closest(".sticky-col-stack") === stickyStack);
+
+  // update which sticky panel is active within the current stack
+  stackPanels.forEach(node => {
+    const isActive = node === focusedSticky;
+    node.classList.toggle("cr-active", isActive);
+    node.style.pointerEvents = isActive ? "auto" : "none";
+    node.style.visibility = isActive ? "visible" : "hidden";
+    node.style.zIndex = isActive ? "2" : "0";
+    node.setAttribute("aria-hidden", isActive ? "false" : "true");
+  });
         
   // apply additional effects
   transformSticky(focusedSticky, trigger.element);

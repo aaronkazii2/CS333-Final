@@ -51,6 +51,20 @@
   opacity: 0;
   transition: opacity linear 0.5s, color 0.7s linear, transform 1s ease-in-out, transform-origin 1s ease-in-out;
 }
+.cr-section .sticky-col .sticky-col-stack > .sticky[id] {
+  position: relative;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.cr-section .sticky-col .sticky-col-stack > .sticky[id].cr-active {
+  visibility: visible;
+  pointer-events: auto;
+  z-index: 2;
+}
+.cr-section .sticky-col .sticky-col-stack > .sticky:not([id]) {
+  pointer-events: none;
+}
 .cr-section .sticky-col .sticky-col-stack .sticky:has(.line-block) {
   font-family: var(--cr-poem-font-family);
   transition: transform 0.8s ease-in-out;
