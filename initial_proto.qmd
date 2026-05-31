@@ -391,7 +391,7 @@ make_macro_scatter <- function(x_var, y_var, x_label, y_label, title_text, highl
       shapes = specs$shapes,
       margin = list(l = 82, r = 32, t = 92, b = 76),
       autosize = TRUE,
-      height = story_scatter_height
+      height = 500 #story_scatter_height
     ) |>
     config(
       displayModeBar = FALSE,
