@@ -1196,7 +1196,24 @@ make_macro_scatter(
   y_label = "Equities Return (%)",
   title_text = "Emerging Markets Stretch Further Into High-Inflation Regimes",
   highlight = "Emerging"
-)
+) |>
+  layout(
+    annotations = list(
+      list(
+        x = 65,
+        y = -60,
+        text = "Argentina (2005–2017)",
+        showarrow = TRUE,
+        arrowhead = 2,
+        ax = -80,
+        ay = -40,
+        font = list(size = 12, color = "#1f2933"),
+        bgcolor = "rgba(255,253,248,0.96)",
+        bordercolor = "#d8d1c2",
+        borderwidth = 1
+      )
+    )
+  )
 ```
 :::
 
