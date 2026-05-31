@@ -391,7 +391,7 @@ make_macro_scatter <- function(x_var, y_var, x_label, y_label, title_text, highl
       shapes = specs$shapes,
       margin = list(l = 82, r = 32, t = 92, b = 76),
       autosize = TRUE,
-      height = 500 #story_scatter_height
+      height = story_scatter_height
     ) |>
     config(
       displayModeBar = FALSE,
@@ -1464,7 +1464,24 @@ Inside high-inflation, tightening regimes, bonds are not the only outcome. The c
 
 make_danger_regime_bars(
   market_group = "All Markets"
-)
+) |>
+  layout(
+    annotations = list(
+      list(
+        x = "Commodities",
+        y = 12,
+        text = "Physical goods get more<br>expensive during inflation,<br>so commodity investors benefit",
+        showarrow = TRUE,
+        arrowhead = 2,
+        ax = 60,
+        ay = -40,
+        font = list(size = 12, color = "#1f2933"),
+        bgcolor = "rgba(255,253,248,0.96)",
+        bordercolor = "#d8d1c2",
+        borderwidth = 1
+      )
+    )
+  )
 ```
 :::
 
