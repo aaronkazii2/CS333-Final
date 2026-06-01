@@ -683,7 +683,7 @@ make_regime_matrix_callout <- function(
           arrowwidth = 1.2,
           arrowcolor = "#8b2f23",
           ax = -120,
-          ay = -55,
+          ay = -70,
           bgcolor = "rgba(255,253,248,0.96)",
           bordercolor = "#d8d1c2",
           borderwidth = 1,
